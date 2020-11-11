@@ -1,0 +1,47 @@
+﻿@model MyDomainPasswordChange.Models.ChangePasswordViewModel
+
+@{
+    ViewData["Title"] = "Inicio";
+}
+
+<div class="outer">
+    <div class="middle">
+        <div class="d-block col-11 col-md-7 col-lg-6 col-xl-4 p-2 p-md-3 p-lg-5 chpasswordbox">
+            <div class="d-block m-auto text-center border-bottom">
+                <h1 class="h1">Cambiar contraseña</h1>
+                <p style="padding: 5%" class="font-italic">Rellene el formulario para cambiar la contraseña del dominio <strong>ingeco.cu</strong></p>
+            </div>
+            <div style="padding: 5%;">
+                <form method="post" asp-action="ChangePassword" asp-antiforgery="true">
+                    <div asp-validation-summary="All" class="text-danger"></div>
+                    <div class="form-group">
+                        <input asp-for="Username" class="form-control" placeholder="Nombre de usuario" />
+                        <span asp-validation-for="Username" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <input asp-for="Password" class="form-control" placeholder="Contraseña actual" />
+                        <span asp-validation-for="Password" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <input asp-for="NewPassword" class="form-control" placeholder="Nueva contraseña" />
+                        <span asp-validation-for="NewPassword" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <input asp-for="NewPasswordConfirm" class="form-control" placeholder="Confirmar nueva contraseña" />
+                        <span asp-validation-for="NewPasswordConfirm" class="text-danger"></span>
+                    </div>
+                    <div>
+                        <button type="submit" class="btn btn-primary d-flex ml-auto">Cambiar contraseña</button>
+                    </div>
+                </form>
+            </div>
+            <div class="border-top text-center">
+                <p class="mt-2"><strong>Recuerde</strong> su contraseña es la llave para todos los servicios que usted utiliza; <strong class="text-danger">NO LA COMPARTA CON NADIE</strong></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
