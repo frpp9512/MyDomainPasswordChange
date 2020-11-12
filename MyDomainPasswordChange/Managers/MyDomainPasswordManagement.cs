@@ -51,5 +51,11 @@ namespace MyDomainPasswordChange
             var searchUser = UserPrincipal.FindByIdentity(context, IdentityType.SamAccountName, accountName);
             return searchUser;
         }
+
+        public UserInfo GetUserInfo(string accountName)
+        {
+
+            return null;
+        }
     }
 }

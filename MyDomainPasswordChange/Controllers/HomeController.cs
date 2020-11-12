@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using MyDomainPasswordChange.Interfaces;
 using MyDomainPasswordChange.Models;
 
 namespace MyDomainPasswordChange.Controllers
@@ -13,14 +14,19 @@ namespace MyDomainPasswordChange.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         private readonly MyDomainPasswordManagement _passwordManagement;
+        private readonly IMyMailService _mailService;
 
-        public HomeController(ILogger<HomeController> logger, MyDomainPasswordManagement passwordManagement)
+        public HomeController(ILogger<HomeController> logger, MyDomainPasswordManagement passwordManagement, IMyMailService mailService)
         {
             _logger = logger;
             _passwordManagement = passwordManagement;
+            _mailService = mailService;
         }
 
-        public IActionResult Index() => View();
+        public async Task<IActionResult> Index()
+        {
+            return View();
+        }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
