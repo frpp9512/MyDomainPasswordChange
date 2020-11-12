@@ -25,6 +25,7 @@ namespace MyDomainPasswordChange.Managers
                 Sender = MailboxAddress.Parse(mailSettings.MailAddress),
                 Subject = request.Subject,
             };
+            email.Sender.Name = "Servicio de cambio de contraseñas - INGECO";
             email.To.Add(MailboxAddress.Parse(request.MailTo));
             var builder = new BodyBuilder
             {

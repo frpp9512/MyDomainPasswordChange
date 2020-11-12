@@ -1,10 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Net.Http.Headers;
 using MyDomainPasswordChange.Interfaces;
 using MyDomainPasswordChange.Models;
 
@@ -15,18 +20,24 @@ namespace MyDomainPasswordChange.Controllers
         private readonly ILogger<HomeController> _logger;
         private readonly MyDomainPasswordManagement _passwordManagement;
         private readonly IMyMailService _mailService;
+        private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly IConfiguration _configuration;
 
-        public HomeController(ILogger<HomeController> logger, MyDomainPasswordManagement passwordManagement, IMyMailService mailService)
+        public HomeController(ILogger<HomeController> logger,
+                              MyDomainPasswordManagement passwordManagement,
+                              IMyMailService mailService,
+                              IWebHostEnvironment webHostEnvironment,
+                              IConfiguration configuration)
         {
             _logger = logger;
             _passwordManagement = passwordManagement;
             _mailService = mailService;
+            _webHostEnvironment = webHostEnvironment;
+            _configuration = configuration;
         }
 
-        public async Task<IActionResult> Index()
-        {
-            return View();
-        }
+        [HttpGet]
+        public IActionResult Index() => View();
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -37,6 +48,17 @@ namespace MyDomainPasswordChange.Controllers
                 try
                 {
                     _passwordManagement.ChangeUserPassword(viewModel.Username, viewModel.Password, viewModel.NewPassword);
+                    var userInfo = _passwordManagement.GetUserInfo(viewModel.Username);
+                    return RedirectToAction("ChangePasswordSuccess", new UserViewModel 
+                    {
+                        AccountName = userInfo.AccountName,
+                        Company = userInfo.Company,
+                        Department = userInfo.Department,
+                        DisplayName = userInfo.DisplayName,
+                        Email = userInfo.Email,
+                        Title = userInfo.Title,
+                        PasswordExpirationDays = _configuration.GetValue<int>("passwordExpirationDays")
+                    });
                 }
                 catch (UserNotFoundException unfex)
                 {
@@ -52,9 +74,51 @@ namespace MyDomainPasswordChange.Controllers
             return View(viewModel);
         }
 
-        public IActionResult ChangePasswordSuccess(UserViewModel viewModel)
+        [HttpPost]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public async Task<IActionResult> ChangePasswordSuccess(UserViewModel viewModel)
         {
+            if (!string.IsNullOrEmpty(viewModel.Email))
+            {
+                await _mailService.SendMailAsync(new MailRequest
+                {
+                    Body = GetMailTemplate(viewModel.DisplayName, _configuration.GetValue<int>("passwordExpirationDays")),
+                    MailTo = viewModel.Email,
+                    Subject = "Cambio de contraseña"
+                });
+            }
             return View(viewModel);
+        }
+
+        private string GetMailTemplate(string accountName, int expirationDays)
+        {
+            var templatePath = Path.Combine(_webHostEnvironment.WebRootPath, $"templates{Path.DirectorySeparatorChar}mail_template.html");
+            var template = System.IO.File.ReadAllText(templatePath);
+            template = template.Replace("{accountName}", accountName);
+            template = template.Replace("{requestIp}", HttpContext.Connection.RemoteIpAddress.ToString());
+            var dateTime = DateTime.Now;
+            template = template.Replace("{time}", dateTime.ToShortTimeString());
+            template = template.Replace("{date}", dateTime.ToShortDateString());
+            template = template.Replace("{expirationDays}", expirationDays.ToString());
+            var expirationDate = dateTime.AddDays(expirationDays);
+            template = template.Replace("{expirationDate}", expirationDate.ToShortDateString());
+            return template;
+        }
+
+        [HttpGet]
+        public async Task<FileStreamResult> UserPicture(string accountName)
+        {
+            var image = await _passwordManagement.GetUserImageBytesAsync(accountName);
+            if (image == null)
+            {
+                var defaultPicture = Path.Combine(_webHostEnvironment.WebRootPath, $"img{Path.DirectorySeparatorChar}default_user.jpg");
+                image = await System.IO.File.ReadAllBytesAsync(defaultPicture);
+            }
+            var stream = new MemoryStream(image);
+            return new FileStreamResult(stream, new MediaTypeHeaderValue("image/jpg"))
+            {
+                FileDownloadName = $"{accountName}.jpeg"
+            };
         }
 
         public IActionResult Privacy()

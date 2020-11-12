@@ -7,7 +7,6 @@ namespace MyDomainPasswordChange
 {
     public class UserInfo
     {
-        public Guid Guid { get; set; }
         public string AccountName { get; set; }
         public string DisplayName { get; set; }
         public string Title { get; set; }

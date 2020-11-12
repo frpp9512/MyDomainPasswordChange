@@ -59,11 +59,13 @@ html {
     position: relative;
     min-height: 100%;
     background: linear-gradient(45deg, rgb(150,180,180), rgb(250,220,180));
+    color: #404040;
 }
 
 body {
     /* Margin bottom by footer height */
     margin-bottom: 60px;
+    color: #404040;
 }
 
 .footer {
@@ -97,4 +99,9 @@ body {
     margin-left: auto;
     overflow: hidden;
     margin-right: auto;
+}
+
+.user_picture {
+    border-radius: 50px;
+    border: 1px;
 }
