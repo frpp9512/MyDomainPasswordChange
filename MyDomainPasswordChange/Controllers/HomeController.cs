@@ -74,7 +74,6 @@ namespace MyDomainPasswordChange.Controllers
             return View(viewModel);
         }
 
-        [HttpPost]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public async Task<IActionResult> ChangePasswordSuccess(UserViewModel viewModel)
         {
