@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.DirectoryServices;
+﻿using System.DirectoryServices;
 using System.DirectoryServices.AccountManagement;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
-using System.Linq;
-using System.Net.Http.Headers;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace MyDomainPasswordChange
@@ -16,10 +10,7 @@ namespace MyDomainPasswordChange
     {
         private readonly IBindCredentialsProvider _credentialsProvider;
 
-        public MyDomainPasswordManagement(IBindCredentialsProvider credentialsProvider)
-        {
-            _credentialsProvider = credentialsProvider;
-        }
+        public MyDomainPasswordManagement(IBindCredentialsProvider credentialsProvider) => _credentialsProvider = credentialsProvider;
 
         public bool AuthenticateUser(string accountName, string password)
         {
@@ -40,7 +31,7 @@ namespace MyDomainPasswordChange
             {
                 if (!AuthenticateUser(accountName, password))
                 {
-                    throw new PasswordChangeException($"La contraseña escrita no es correcta.");
+                    throw new BadPasswordException($"La contraseña escrita no es correcta.");
                 }
                 try
                 {
@@ -137,12 +128,9 @@ namespace MyDomainPasswordChange
             var results = await Task.Run(() => searcher.FindOne());
             var userEntry = results.GetDirectoryEntry();
 
-            if (userEntry.Properties[LdapAttributes.JPEG_PHOTO].Value != null)
-            {
-                return userEntry.Properties[LdapAttributes.JPEG_PHOTO].Value as byte[];
-            }
-
-            return null;
+            return userEntry.Properties[LdapAttributes.JPEG_PHOTO].Value != null
+                ? userEntry.Properties[LdapAttributes.JPEG_PHOTO].Value as byte[]
+                : null;
         }
     }
 }

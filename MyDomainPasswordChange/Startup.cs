@@ -31,6 +31,7 @@ namespace MyDomainPasswordChange
             services.AddTransient<IMailSettingsProvider, MailSettingsProvider>();
             services.AddScoped<IMyMailService, MyMailService>();
             services.AddTransient<IChallenger, Challenger>();
+            services.AddCounterManager();
             services.AddControllersWithViews();
         }
 

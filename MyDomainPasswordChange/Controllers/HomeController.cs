@@ -23,13 +23,15 @@ namespace MyDomainPasswordChange.Controllers
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly IConfiguration _configuration;
         private readonly IChallenger _challenger;
+        private readonly ICounterManager _counters;
 
         public HomeController(ILogger<HomeController> logger,
                               MyDomainPasswordManagement passwordManagement,
                               IMyMailService mailService,
                               IWebHostEnvironment webHostEnvironment,
                               IConfiguration configuration,
-                              IChallenger challenger)
+                              IChallenger challenger,
+                              ICounterManager counters)
         {
             _logger = logger;
             _passwordManagement = passwordManagement;
@@ -37,6 +39,7 @@ namespace MyDomainPasswordChange.Controllers
             _webHostEnvironment = webHostEnvironment;
             _configuration = configuration;
             _challenger = challenger;
+            _counters = counters;
         }
 
         [HttpGet]
@@ -51,6 +54,7 @@ namespace MyDomainPasswordChange.Controllers
                 if (!_challenger.EvaluateChallengeAnswer(viewModel.ChallengeId, viewModel.ChallengeAnswer))
                 {
                     ModelState.AddModelError("Challenge failed", "El debe responder correctamente el desafío.");
+                    _counters.Count(Counters.BadChallengesTries);
                     viewModel.ChallengeAnswer = "";
                     return View("Index", viewModel);
                 }
@@ -68,6 +72,12 @@ namespace MyDomainPasswordChange.Controllers
                         Title = userInfo.Title,
                         PasswordExpirationDays = _configuration.GetValue<int>("passwordExpirationDays")
                     });
+                }
+                catch (BadPasswordException bpex)
+                {
+                    ModelState.AddModelError("BadPassword", bpex.Message);
+                    _counters.Count(Counters.BadPasswordsTries);
+                    return View("Index");
                 }
                 catch (UserNotFoundException unfex)
                 {
