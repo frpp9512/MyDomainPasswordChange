@@ -7,7 +7,7 @@
 
 <div class="outer">
     <div class="middle">
-        <div class="d-block col-11 col-md-7 col-lg-6 col-xl-4 p-2 p-md-3 p-lg-5 chpasswordbox">
+        <div class="d-block col-11 col-md-7 col-lg-6 col-xl-4 p-2 p-md-3 p-lg-5 chpasswordbox fade-in">
             <div class="d-block m-auto text-center border-bottom pl-5 pr-5">
                 <img src="~/img/password_logo.png" class="img-fluid mb-3" />
             </div>
@@ -61,7 +61,6 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-
     <script>
         $("#ChallengeAnswer").val("");
     </script>
