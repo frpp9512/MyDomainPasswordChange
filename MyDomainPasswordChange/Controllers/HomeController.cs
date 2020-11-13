@@ -22,18 +22,21 @@ namespace MyDomainPasswordChange.Controllers
         private readonly IMyMailService _mailService;
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly IConfiguration _configuration;
+        private readonly IChallenger _challenger;
 
         public HomeController(ILogger<HomeController> logger,
                               MyDomainPasswordManagement passwordManagement,
                               IMyMailService mailService,
                               IWebHostEnvironment webHostEnvironment,
-                              IConfiguration configuration)
+                              IConfiguration configuration,
+                              IChallenger challenger)
         {
             _logger = logger;
             _passwordManagement = passwordManagement;
             _mailService = mailService;
             _webHostEnvironment = webHostEnvironment;
             _configuration = configuration;
+            _challenger = challenger;
         }
 
         [HttpGet]
@@ -45,6 +48,12 @@ namespace MyDomainPasswordChange.Controllers
         {
             if (ModelState.IsValid)
             {
+                if (!_challenger.EvaluateChallengeAnswer(viewModel.ChallengeId, viewModel.ChallengeAnswer))
+                {
+                    ModelState.AddModelError("Challenge failed", "El debe responder correctamente el desafío.");
+                    viewModel.ChallengeAnswer = "";
+                    return View("Index", viewModel);
+                }
                 try
                 {
                     _passwordManagement.ChangeUserPassword(viewModel.Username, viewModel.Password, viewModel.NewPassword);
@@ -71,7 +80,7 @@ namespace MyDomainPasswordChange.Controllers
                     return View("Index");
                 }
             }
-            return View(viewModel);
+            return View("Index", viewModel);
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
@@ -118,6 +127,22 @@ namespace MyDomainPasswordChange.Controllers
             {
                 FileDownloadName = $"{accountName}.jpeg"
             };
+        }
+
+        [HttpGet]
+        public IActionResult ChallengePicture(int challengeId)
+        {
+            try
+            {
+                var challengeImage = _challenger.GetChallengeImage(challengeId);
+                var stream = new MemoryStream();
+                challengeImage.Save(stream, ImageFormat.Jpeg);
+                return new FileContentResult(stream.ToArray(), new MediaTypeHeaderValue("image/jpg"));
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
         public IActionResult Privacy()

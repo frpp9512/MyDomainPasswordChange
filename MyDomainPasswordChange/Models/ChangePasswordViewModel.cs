@@ -24,5 +24,9 @@ namespace MyDomainPasswordChange.Models
         [DataType(DataType.Password)]
         [Compare("NewPassword", ErrorMessage = "Debe de confirmar la nueva contraseña correctamente.")]
         public string NewPasswordConfirm { get; set; }
+
+        public int ChallengeId { get; set; }
+
+        public string ChallengeAnswer { get; set; }
     }
 }

@@ -30,6 +30,7 @@ namespace MyDomainPasswordChange
             services.AddScoped<MyDomainPasswordManagement>();
             services.AddTransient<IMailSettingsProvider, MailSettingsProvider>();
             services.AddScoped<IMyMailService, MyMailService>();
+            services.AddTransient<IChallenger, Challenger>();
             services.AddControllersWithViews();
         }
 
