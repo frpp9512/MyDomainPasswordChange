@@ -10,16 +10,19 @@ namespace MyDomainPasswordChange
         private readonly IHttpContextAccessor _contextAccessor;
         private readonly IConfiguration _configuration;
         private readonly IMailNotificator _notificator;
+        private readonly IIpAddressBlacklist _blacklist;
         private readonly double _alarmRefresh = 5;
 
         public AlertCountingManagement(IHttpContextAccessor contextAccessor,
                                        IConfiguration configuration,
-                                       IMailNotificator notificator)
+                                       IMailNotificator notificator,
+                                       IIpAddressBlacklist blacklist)
         {
             _counterManager = new CounterManager();
             _contextAccessor = contextAccessor;
             _configuration = configuration;
             _notificator = notificator;
+            _blacklist = blacklist;
         }
 
         public void CountChallengeFail()
@@ -63,7 +66,7 @@ namespace MyDomainPasswordChange
                 {
                     _counterManager.SetCounterAlarm(counterAlertKey,
                                                     GetBadChallengeTriesOffense(),
-                                                    (key, tries) => { /* Block offender ip */ });
+                                                    async (key, tries) => { _blacklist.AddIpAddressToBlacklist(remoteIp, "challenge"); await _notificator.SendBlacklistAlertAsync("challenge"); });
                 }
                 if ((DateTime.Now - _counterManager.GetCounterLastCount(counterAlertKey)).TotalMinutes > _alarmRefresh)
                 {
@@ -119,7 +122,7 @@ namespace MyDomainPasswordChange
                 {
                     _counterManager.SetCounterAlarm(counterAlertKey,
                                                     GetBadPasswordTriesOffense(),
-                                                    (key, tries) => { /* block offender ip */ });
+                                                    async (key, tries) => { _blacklist.AddIpAddressToBlacklist(remoteIp, "password"); await _notificator.SendBlacklistAlertAsync("password"); });
                 }
                 if ((DateTime.Now - _counterManager.GetCounterLastCount(counterAlertKey)).TotalMinutes > _alarmRefresh)
                 {

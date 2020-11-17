@@ -10,5 +10,6 @@ namespace MyDomainPasswordChange
         Task SendChangePasswordNotificationAsync(string accountName);
         Task SendChangePasswordAlertAsync(string accountName);
         Task SendChallengeAlertAsync();
+        Task SendBlacklistAlertAsync(string reason);
     }
 }

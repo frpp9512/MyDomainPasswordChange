@@ -34,7 +34,9 @@ namespace MyDomainPasswordChange
             services.AddTransient<IMyMailService, MyMailService>();
             services.AddTransient<IMailNotificator, MailNotificator>();
             services.AddTransient<IChallenger, Challenger>();
+            services.AddSingleton<IIpAddressBlacklist, IpAddressBlacklist>();
             services.AddSingleton<IAlertCountingManagement, AlertCountingManagement>();
+            services.AddScoped<BlacklistFilter>();
             services.AddControllersWithViews();
         }
 

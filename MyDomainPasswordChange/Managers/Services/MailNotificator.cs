@@ -61,15 +61,19 @@ namespace MyDomainPasswordChange
             }
         }
 
-        public async Task SendChallengeAlertAsync()
+        public async Task SendChallengeAlertAsync() => await _mailService.SendMailAsync(new MailRequest
         {
-            await _mailService.SendMailAsync(new MailRequest
-            {
-                Body = GetChallengeAlertMailTemplate(),
-                MailTo = AdminEmail,
-                Subject = "Alerta de seguridad - Cambio de contraseña"
-            });
-        }
+            Body = GetChallengeAlertMailTemplate(),
+            MailTo = AdminEmail,
+            Subject = "Alerta de seguridad - Cambio de contraseña"
+        });
+
+        public async Task SendBlacklistAlertAsync(string reason) => await _mailService.SendMailAsync(new MailRequest
+        {
+            Body = GetIpBlacklistMailTemplate(reason),
+            MailTo = AdminEmail,
+            Subject = "Alerta de seguridad - Cambio de contraseña"
+        });
 
         private string GetNotificationMailTemplate(string accountName, int expirationDays)
         {
@@ -106,6 +110,28 @@ namespace MyDomainPasswordChange
             var dateTime = DateTime.Now;
             template = template.Replace("{time}", dateTime.ToShortTimeString());
             template = template.Replace("{date}", dateTime.ToShortDateString());
+            return template;
+        }
+
+        private string GetIpBlacklistMailTemplate(string reason)
+        {
+            var templatePath = Path.Combine(_webHostEnvironment.WebRootPath, $"templates{Path.DirectorySeparatorChar}mail_ip_blacklisted_template.html");
+            var template = File.ReadAllText(templatePath);
+            template = template.Replace("{requestIp}", HttpContext.Connection.RemoteIpAddress.ToString());
+            var dateTime = DateTime.Now;
+            template = template.Replace("{time}", dateTime.ToShortTimeString());
+            template = template.Replace("{date}", dateTime.ToShortDateString());
+            switch (reason)
+            {
+                case "challenge":
+                    template = template.Replace("{blacklist_reason}", "se intentó enviar el fomulario respondiendo mal del desafío en múltiples ocasiones");
+                    break;
+                case "password":
+                    template = template.Replace("{blacklist_reason}", "falló en escribir la contraseña de usuario en múltiples ocasiones");
+                    break;
+                default:
+                    break;
+            }
             return template;
         }
     }
