@@ -19,27 +19,27 @@ namespace MyDomainPasswordChange.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         private readonly MyDomainPasswordManagement _passwordManagement;
-        private readonly IMyMailService _mailService;
+        private readonly IMailNotificator _mailNotificator;
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly IConfiguration _configuration;
         private readonly IChallenger _challenger;
-        private readonly ICounterManager _counters;
+        private readonly IAlertCountingManagement _countingManagement;
 
         public HomeController(ILogger<HomeController> logger,
                               MyDomainPasswordManagement passwordManagement,
-                              IMyMailService mailService,
+                              IMailNotificator mailNotificator,
                               IWebHostEnvironment webHostEnvironment,
                               IConfiguration configuration,
                               IChallenger challenger,
-                              ICounterManager counters)
+                              IAlertCountingManagement countingManagement)
         {
             _logger = logger;
             _passwordManagement = passwordManagement;
-            _mailService = mailService;
+            _mailNotificator = mailNotificator;
             _webHostEnvironment = webHostEnvironment;
             _configuration = configuration;
             _challenger = challenger;
-            _counters = counters;
+            _countingManagement = countingManagement;
         }
 
         [HttpGet]
@@ -47,14 +47,14 @@ namespace MyDomainPasswordChange.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult ChangePassword(ChangePasswordViewModel viewModel)
+        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel viewModel)
         {
             if (ModelState.IsValid)
             {
                 if (!_challenger.EvaluateChallengeAnswer(viewModel.ChallengeId, viewModel.ChallengeAnswer))
                 {
                     ModelState.AddModelError("Challenge failed", "El debe responder correctamente el desafío.");
-                    _counters.Count(Counters.BadChallengesTries);
+                    _countingManagement.CountChallengeFail();
                     viewModel.ChallengeAnswer = "";
                     return View("Index", viewModel);
                 }
@@ -62,6 +62,7 @@ namespace MyDomainPasswordChange.Controllers
                 {
                     _passwordManagement.ChangeUserPassword(viewModel.Username, viewModel.Password, viewModel.NewPassword);
                     var userInfo = _passwordManagement.GetUserInfo(viewModel.Username);
+                    await _mailNotificator.SendChangePasswordNotificationAsync(viewModel.Username);
                     return RedirectToAction("ChangePasswordSuccess", new UserViewModel 
                     {
                         AccountName = userInfo.AccountName,
@@ -76,7 +77,7 @@ namespace MyDomainPasswordChange.Controllers
                 catch (BadPasswordException bpex)
                 {
                     ModelState.AddModelError("BadPassword", bpex.Message);
-                    _counters.Count(Counters.BadPasswordsTries);
+                    _countingManagement.CountPasswordFail(viewModel.Username);
                     return View("Index");
                 }
                 catch (UserNotFoundException unfex)
@@ -94,34 +95,7 @@ namespace MyDomainPasswordChange.Controllers
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public async Task<IActionResult> ChangePasswordSuccess(UserViewModel viewModel)
-        {
-            if (!string.IsNullOrEmpty(viewModel.Email))
-            {
-                await _mailService.SendMailAsync(new MailRequest
-                {
-                    Body = GetMailTemplate(viewModel.DisplayName, _configuration.GetValue<int>("passwordExpirationDays")),
-                    MailTo = viewModel.Email,
-                    Subject = "Cambio de contraseña"
-                });
-            }
-            return View(viewModel);
-        }
-
-        private string GetMailTemplate(string accountName, int expirationDays)
-        {
-            var templatePath = Path.Combine(_webHostEnvironment.WebRootPath, $"templates{Path.DirectorySeparatorChar}mail_template.html");
-            var template = System.IO.File.ReadAllText(templatePath);
-            template = template.Replace("{accountName}", accountName);
-            template = template.Replace("{requestIp}", HttpContext.Connection.RemoteIpAddress.ToString());
-            var dateTime = DateTime.Now;
-            template = template.Replace("{time}", dateTime.ToShortTimeString());
-            template = template.Replace("{date}", dateTime.ToShortDateString());
-            template = template.Replace("{expirationDays}", expirationDays.ToString());
-            var expirationDate = dateTime.AddDays(expirationDays);
-            template = template.Replace("{expirationDate}", expirationDate.ToShortDateString());
-            return template;
-        }
+        public IActionResult ChangePasswordSuccess(UserViewModel viewModel) => View(viewModel);
 
         [HttpGet]
         public async Task<FileStreamResult> UserPicture(string accountName)

@@ -9,7 +9,21 @@ namespace MyDomainPasswordChange
     {
         private List<Counter> _counters = new List<Counter>();
 
-        public void AddCounter(string key) => _counters.Add(new Counter { Key = key });
+        public void AddCounter(string key, string description = "")
+        {
+            if (_counters.Any(c => c.Key == key))
+            {
+                var counter = _counters.FirstOrDefault(c => c.Key == key);
+                counter.Description = description;
+                counter.Reset();
+            }
+            else
+            {
+                _counters.Add(new Counter { Key = key, Description = description });
+            }
+        }
+
+        public bool ExistCounter(string counterKey) => _counters.Any(c => c.Key == counterKey);
 
         public void Count(string counterKey)
         {
@@ -20,7 +34,8 @@ namespace MyDomainPasswordChange
             }
             else
             {
-                throw new KeyNotFoundException("El contador espeficado no existe.");
+                AddCounter(counterKey);
+                Count(counterKey);
             }
         }
 
@@ -72,24 +87,86 @@ namespace MyDomainPasswordChange
                 throw new KeyNotFoundException("El contador espeficado no existe.");
             }
         }
+
+        public bool IsCounterAlarming(string counterKey)
+        {
+            if (_counters.Any(c => c.Key == counterKey))
+            {
+                var counter = _counters.FirstOrDefault(c => c.Key == counterKey);
+                return counter.Alarm is not null ? counter.Alarming : false;
+            }
+            else
+            {
+                throw new KeyNotFoundException("El contador espeficado no existe.");
+            }
+        }
+
+        public void RemoveCounter(string counterKey)
+        {
+            if (_counters.Any(c => c.Key == counterKey))
+            {
+                var counter = _counters.FirstOrDefault(c => c.Key == counterKey);
+                _counters.Remove(counter);
+            }
+        }
+
+        public void RemoveAllCounters() => _counters.Clear();
+
+        public DateTime GetCounterLastCount(string counterKey)
+        {
+            if (_counters.Any(c => c.Key == counterKey))
+            {
+                var counter = _counters.FirstOrDefault(c => c.Key == counterKey);
+                return counter.LastCount;
+            }
+            else
+            {
+                return DateTime.MinValue;
+            }
+        }
+
+        public bool HasCounted(string counterKey) => _counters.Any(c => c.HasCounted);
+
+        public bool HasAlarm(string counterKey)
+        {
+            if (_counters.Any(c => c.Key == counterKey))
+            {
+                var counter = _counters.FirstOrDefault(c => c.Key == counterKey);
+                return counter.HasAlarm;
+            }
+            else
+            {
+                throw new KeyNotFoundException("El contador espeficado no existe.");
+            }
+        }
     }
 
     class Counter
     {
         public string Key { get; set; }
         public uint Value { get; set; }
+        public string Description { get; set; }
+        public DateTime LastCount { get; set; } = DateTime.MinValue;
         public CounterAlarm Alarm { get; set; }
+        public bool HasAlarm => Alarm is not null;
+        public bool Alarming => Alarm is not null && Value >= Alarm.AlarmValue;
+        public bool HasCounted => Value > 0;
 
         public void Count()
         {
             Value++;
-            if (Alarm is not null && Value >= Alarm.AlarmValue)
+            LastCount = DateTime.Now;
+            if (Alarming)
             {
                 Alarm.AlarmCallback(Key, Value);
             }
         }
 
-        public void Reset() => Value = 0;
+        public void Reset()
+        {
+            Value = 0;
+            LastCount = DateTime.MinValue;
+        }
     }
 
     class CounterAlarm
@@ -98,3 +175,4 @@ namespace MyDomainPasswordChange
         public Action<string, uint> AlarmCallback { get; set; }
     }
 }
+

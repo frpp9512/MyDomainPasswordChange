@@ -27,11 +27,19 @@ namespace MyDomainPasswordChange.Managers
             };
             email.Sender.Name = "Servicio de cambio de contraseñas - INGECO";
             email.To.Add(MailboxAddress.Parse(request.MailTo));
+            if (!string.IsNullOrEmpty(request.Cc))
+            {
+                email.Cc.Add(MailboxAddress.Parse(request.Cc));
+            }
             var builder = new BodyBuilder
             {
                 HtmlBody = request.Body
             };
             email.Body = builder.ToMessageBody();
+            if (request.Important)
+            {
+                email.Importance = MessageImportance.High;
+            }
             using var smtp = new SmtpClient
             {
                 ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true

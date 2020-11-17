@@ -17,10 +17,20 @@ namespace MyDomainPasswordChange
             counterManager.AddCounter(Counters.BadChallengesTries);
             var passwordTriesAlarmValue = configuration.GetValue<uint>("badPasswordTriesAlarm");
             var challengeTriesAlarmValue = configuration.GetValue<uint>("badChallengeTriesAlarm");
-            counterManager.SetCounterAlarm(Counters.BadPasswordsTries, passwordTriesAlarmValue, (key, value) => Console.WriteLine("BAD PASSWORD ALARM!"));
-            counterManager.SetCounterAlarm(Counters.BadChallengesTries, challengeTriesAlarmValue, (key, value) => Console.WriteLine("BAD CHALLENGE ALARM!"));
+            counterManager.SetCounterAlarm(Counters.BadPasswordsTries, passwordTriesAlarmValue, PasswordTriesAlarm);
+            counterManager.SetCounterAlarm(Counters.BadChallengesTries, challengeTriesAlarmValue, ChallengeTriesAlarm);
             services.AddSingleton<ICounterManager>(counterManager);
             return services;
+        }
+
+        public static void PasswordTriesAlarm(string key, uint value)
+        {
+
+        }
+
+        public static void ChallengeTriesAlarm(string key, uint value)
+        {
+
         }
     }
 
