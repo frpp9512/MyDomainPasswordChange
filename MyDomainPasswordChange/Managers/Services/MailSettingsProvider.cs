@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
-using MyDomainPasswordChange.Interfaces;
+using MyDomainPasswordChange.Management;
 using System;
 using System.Collections.Generic;
 using System.Linq;

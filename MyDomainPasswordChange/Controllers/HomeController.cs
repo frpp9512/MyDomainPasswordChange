@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
-using MyDomainPasswordChange.Interfaces;
+using MyDomainPasswordChange.Management;
 using MyDomainPasswordChange.Models;
 
 namespace MyDomainPasswordChange.Controllers
@@ -115,11 +115,13 @@ namespace MyDomainPasswordChange.Controllers
         }
 
         [HttpGet]
-        public IActionResult ChallengePicture(int challengeId)
+        public FileContentResult ChallengePicture(int challengeId)
         {
             try
             {
+                _logger.LogInformation($"Requesting challenge image Id: {challengeId}.");
                 var challengeImage = _challenger.GetChallengeImage(challengeId);
+                _logger.LogInformation($"Obtained challenge image with: {challengeImage?.Width} width.");
                 var stream = new MemoryStream();
                 challengeImage.Save(stream, ImageFormat.Jpeg);
                 return new FileContentResult(stream.ToArray(), new MediaTypeHeaderValue("image/jpg"));

@@ -1,6 +1,6 @@
 ﻿using MailKit.Net.Smtp;
 using MimeKit;
-using MyDomainPasswordChange.Interfaces;
+using MyDomainPasswordChange.Management;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,10 +8,17 @@ using System.Threading.Tasks;
 
 namespace MyDomainPasswordChange.Managers
 {
+    /// <summary>
+    /// Represents a email sender service.
+    /// </summary>
     public class MyMailService : IMyMailService
     {
         private readonly IMailSettingsProvider _settings;
 
+        /// <summary>
+        /// Creates a new instance of the <see cref="MyMailService"/>.
+        /// </summary>
+        /// <param name="settings">The <see cref="IMailSettingsProvider"/> implementation to access the mail settings..</param>
         public MyMailService(IMailSettingsProvider settings)
         {
             _settings = settings;

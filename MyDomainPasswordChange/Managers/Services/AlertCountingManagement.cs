@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using MyDomainPasswordChange.Management;
 using System;
 
 namespace MyDomainPasswordChange

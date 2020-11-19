@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -11,13 +12,15 @@ namespace MyDomainPasswordChange
     public class IpAddressBlacklist : IIpAddressBlacklist
     {
         private readonly IWebHostEnvironment _webHostEnvironment;
-        private string FilePath => Path.Combine(_webHostEnvironment.ContentRootPath, "blacklist.json");
+
+        private string FilePath { get; set; }
 
         private List<BlacklistedIpAddress> BlacklistedIps { get; set; } = new List<BlacklistedIpAddress>();
 
-        public IpAddressBlacklist(IWebHostEnvironment webHostEnvironment)
+        public IpAddressBlacklist(IWebHostEnvironment webHostEnvironment, IConfiguration configuration)
         {
             _webHostEnvironment = webHostEnvironment;
+            FilePath = configuration.GetValue<string>("blacklistFilePath");
             LoadBlacklistFromFile();
         }
 

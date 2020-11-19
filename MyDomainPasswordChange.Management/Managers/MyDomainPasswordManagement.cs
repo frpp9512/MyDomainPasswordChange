@@ -4,14 +4,27 @@ using System.Drawing;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace MyDomainPasswordChange
+namespace MyDomainPasswordChange.Management
 {
+    /// <summary>
+    /// Manages the LDAP user accounts for getting information and changing passwords.
+    /// </summary>
     public class MyDomainPasswordManagement
     {
         private readonly IBindCredentialsProvider _credentialsProvider;
 
+        /// <summary>
+        /// Creates a new instance of <see cref="MyDomainPasswordManagement"/>.
+        /// </summary>
+        /// <param name="credentialsProvider">The implementation of <see cref="IBindCredentialsProvider"/> to access the bind credential info.</param>
         public MyDomainPasswordManagement(IBindCredentialsProvider credentialsProvider) => _credentialsProvider = credentialsProvider;
 
+        /// <summary>
+        /// Authenticates the specified user credentials.
+        /// </summary>
+        /// <param name="accountName">The account name of the user.</param>
+        /// <param name="password">The password of the user account.</param>
+        /// <returns><see langword="true"/> if the authentication succeeded.</returns>
         public bool AuthenticateUser(string accountName, string password)
         {
             var context = new PrincipalContext(ContextType.Domain,
@@ -22,8 +35,22 @@ namespace MyDomainPasswordChange
             return context.ValidateCredentials(accountName, password);
         }
 
-        public bool UserExists(string accountName) => GetUser(accountName) != null;
+        /// <summary>
+        /// Determines if exists an user account with the provided name.
+        /// </summary>
+        /// <param name="accountName">The account name to determine if exists an user account with.</param>
+        /// <returns><see langword="true"/> if exists an user account with the provided name.</returns>
+        public bool UserExists(string accountName) => GetUser(accountName) is not null;
 
+        /// <summary>
+        /// Changes the password of the specified user.
+        /// It checks if the current passwords match and then sets the new one.
+        /// </summary>
+        /// <exception cref="UserNotFoundException"></exception>
+        /// <exception cref="PasswordChangeException"></exception>
+        /// <param name="accountName"></param>
+        /// <param name="password"></param>
+        /// <param name="newPassword"></param>
         public void ChangeUserPassword(string accountName, string password, string newPassword)
         {
             var user = GetUser(accountName);
@@ -52,6 +79,11 @@ namespace MyDomainPasswordChange
             }
         }
 
+        /// <summary>
+        /// Gets the LDAP user with the provided account name.
+        /// </summary>
+        /// <param name="accountName">The account name of the user to search for.</param>
+        /// <returns>An instance of <see cref="UserPrincipal"/> that represents the LDAP user founded, otherwise <see langword="null"/>.</returns>
         private UserPrincipal GetUser(string accountName)
         {
             var context = new PrincipalContext(ContextType.Domain,
@@ -63,6 +95,11 @@ namespace MyDomainPasswordChange
             return searchUser;
         }
 
+        /// <summary>
+        /// Gets the LDAP user info with the specified account name.
+        /// </summary>
+        /// <param name="accountName">The account name of the user to search for.</param>
+        /// <returns>An instance of <see cref="UserInfo"/> with the info the LDAP user founded.</returns>
         public UserInfo GetUserInfo(string accountName)
         {
             var entry = new DirectoryEntry($"LDAP://{_credentialsProvider.GetLdapServer()}",
@@ -90,6 +127,11 @@ namespace MyDomainPasswordChange
             return info;
         }
 
+        /// <summary>
+        /// Gets the user image stored in the LDAP (in attribute "jpegPhoto").
+        /// </summary>
+        /// <param name="accountName">The account name of the user to search for the image.</param>
+        /// <returns>A instance of <see cref="Image"/> with the founded user image, otherwise <see langword="null"/>.</returns>
         public async Task<Image> GetUserImage(string accountName)
         {
             var entry = new DirectoryEntry($"LDAP://{_credentialsProvider.GetLdapServer()}",
@@ -115,6 +157,11 @@ namespace MyDomainPasswordChange
             return null;
         }
 
+        /// <summary>
+        /// Gets the user image stored in the LDAP (in attribute "jpegPhoto").
+        /// </summary>
+        /// <param name="accountName">The account name of the user to search for the image.</param>
+        /// <returns>The image <see cref="byte"/> array of the founded user image, otherwise <see langword="null"/>.</returns>
         public async Task<byte[]> GetUserImageBytesAsync(string accountName)
         {
             var entry = new DirectoryEntry($"LDAP://{_credentialsProvider.GetLdapServer()}",

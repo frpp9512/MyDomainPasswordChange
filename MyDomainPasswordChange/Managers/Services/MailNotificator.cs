@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using MyDomainPasswordChange.Management;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -42,7 +43,7 @@ namespace MyDomainPasswordChange
                 Body = GetAlertMailTemplate(user.DisplayName),
                 MailTo = user.Email ?? AdminEmail,
                 Cc = !String.IsNullOrEmpty(user.Email) ? AdminEmail : "",
-                Subject = "Alerta de seguridad - Cambio de contraseña",
+                Subject = "Alerta de contraseña - Cambio de contraseña",
                 Important = true
             });
         }
@@ -65,14 +66,16 @@ namespace MyDomainPasswordChange
         {
             Body = GetChallengeAlertMailTemplate(),
             MailTo = AdminEmail,
-            Subject = "Alerta de seguridad - Cambio de contraseña"
+            Subject = "Alerta del desafío - Cambio de contraseña",
+            Important = true
         });
 
         public async Task SendBlacklistAlertAsync(string reason) => await _mailService.SendMailAsync(new MailRequest
         {
             Body = GetIpBlacklistMailTemplate(reason),
             MailTo = AdminEmail,
-            Subject = "Alerta de seguridad - Cambio de contraseña"
+            Subject = "Alerta de lista negra - Cambio de contraseña",
+            Important = true
         });
 
         private string GetNotificationMailTemplate(string accountName, int expirationDays)

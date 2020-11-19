@@ -50,9 +50,10 @@ namespace MyDomainPasswordChange
             {
                 throw new Exception("No existen challenges registrados.");
             }
-            var test = _webHostEnvironment.ContentRootPath;
             var filename = _challenges.First(c => c.Id == challengeId).FileName;
-            return Image.FromFile(Path.Combine(_webHostEnvironment.WebRootPath, $"img{Path.DirectorySeparatorChar}challenges{Path.DirectorySeparatorChar}{filename}"));
+            var path = Path.Combine(_webHostEnvironment.WebRootPath, $"img{Path.DirectorySeparatorChar}challenges{Path.DirectorySeparatorChar}{filename}");
+            Console.WriteLine(path);
+            return Image.FromFile(path);
         }
     }
 }
