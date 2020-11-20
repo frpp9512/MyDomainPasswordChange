@@ -137,5 +137,25 @@ namespace MyDomainPasswordChange
             }
             return template;
         }
+
+        public async Task SendExpirationNotificationAsync(UserInfo userInfo, DateTime expirationDate) => await _mailService.SendMailAsync(new MailRequest
+        {
+            Body = GetExpirationAlertMailTemplate(userInfo, expirationDate),
+            MailTo = userInfo.Email,
+            Subject = "Su contraseña expirará pronto - Cambio de contraseña",
+            Important = true
+        });
+
+        private string GetExpirationAlertMailTemplate(UserInfo userInfo, DateTime expirationDate)
+        {
+            var templatePath = Path.Combine(_webHostEnvironment.WebRootPath, $"templates{Path.DirectorySeparatorChar}mail_expiration_notification_template.html");
+            var template = File.ReadAllText(templatePath);
+            template = template.Replace("{displayName}", userInfo.DisplayName);
+            var dateTime = DateTime.Now;
+            template = template.Replace("{expirationDays}", (expirationDate - dateTime).Days.ToString());
+            template = template.Replace("{expirationDate}", expirationDate.ToShortDateString());
+            template = template.Replace("{accountName}", userInfo.AccountName);
+            return template;
+        }
     }
 }

@@ -44,7 +44,7 @@ namespace MyDomainPasswordChange.Controllers
         }
 
         [HttpGet]
-        public IActionResult Index() => View();
+        public IActionResult Index(string accountName = "") => View(model: new ChangePasswordViewModel { Username = accountName });
 
         [HttpPost]
         [ValidateAntiForgeryToken]

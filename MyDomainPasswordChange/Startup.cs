@@ -31,12 +31,13 @@ namespace MyDomainPasswordChange
             services.AddTransient<IBindCredentialsProvider>(services => new BindCredentialsProvider(services.GetService<IConfiguration>()));
             services.AddTransient<MyDomainPasswordManagement>();
             services.AddTransient<IMailSettingsProvider, MailSettingsProvider>();
-            services.AddTransient<IMyMailService, MyMailService>();
+            services.AddSingleton<IMyMailService, MyMailService>();
             services.AddTransient<IMailNotificator, MailNotificator>();
             services.AddTransient<IChallenger, Challenger>();
             services.AddSingleton<IIpAddressBlacklist, IpAddressBlacklist>();
             services.AddSingleton<IAlertCountingManagement, AlertCountingManagement>();
             services.AddScoped<BlacklistFilter>();
+            services.AddHostedService<TimedHostedService>();
             services.AddControllersWithViews();
         }
 

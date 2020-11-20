@@ -34,5 +34,25 @@ namespace MyDomainPasswordChange.Management
         /// The server communication port for sending emails.
         /// </summary>
         public int Port { get; set; }
+
+        /// <summary>
+        /// Defines the interval to refresh the email queue.
+        /// </summary>
+        public int RefreshQueueInterval { get; set; }
+
+        /// <summary>
+        /// Defines that the configuration should be updated every X queue refresh updates.
+        /// </summary>
+        public int RefreshConfigurationEvery { get; set; }
+
+        /// <summary>
+        /// The maximun sending email amount per time interval.
+        /// </summary>
+        public int MaxMailPerInterval { get; set; }
+
+        /// <summary>
+        /// The time interval for the maximun amount of 
+        /// </summary>
+        public double MailIntervalInSeconds { get; set; }
     }
 }

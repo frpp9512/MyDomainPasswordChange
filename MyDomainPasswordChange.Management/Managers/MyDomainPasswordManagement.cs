@@ -1,4 +1,7 @@
-﻿using System.DirectoryServices;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.DirectoryServices;
 using System.DirectoryServices.AccountManagement;
 using System.Drawing;
 using System.IO;
@@ -122,9 +125,53 @@ namespace MyDomainPasswordChange.Management
                 DisplayName = userEntry.Properties[LdapAttributes.DISPLAYNAME].Value?.ToString(),
                 Email = userEntry.Properties[LdapAttributes.EMAIL].Value?.ToString(),
                 Title = userEntry.Properties[LdapAttributes.TITLE].Value?.ToString(),
+                LastPasswordSet = GetUser(accountName).LastPasswordSet.GetValueOrDefault()
             };
             
             return info;
+        }
+
+        /// <summary>
+        /// Gets all LDAP users info.
+        /// </summary>
+        /// <returns>The list.</returns>
+        public async Task<List<UserInfo>> GetAllActiveUsersInfo()
+        {
+            var entry = new DirectoryEntry($"LDAP://{_credentialsProvider.GetLdapServer()}",
+                                           _credentialsProvider.GetBindUsername(),
+                                           _credentialsProvider.GetBindPassword());
+            var searcher = new DirectorySearcher(entry)
+            {
+                Filter = $"{LdapAttributes.OBJECT_CLASS}=user"
+            };
+
+            var results = await Task.Run(() => searcher.FindAll());
+
+            var users = new List<UserInfo>();
+
+            foreach (SearchResult result in results)
+            {
+                var userEntry = result.GetDirectoryEntry();
+                var principal = GetUser(userEntry.Properties["sAMAccountName"].Value?.ToString());
+                if (principal is not null)
+                {
+                    if (principal.Enabled.GetValueOrDefault())
+                    {
+                        var info = new UserInfo
+                        {
+                            AccountName = principal.SamAccountName,
+                            Company = userEntry.Properties[LdapAttributes.COMPANY].Value?.ToString(),
+                            Department = userEntry.Properties[LdapAttributes.DEPARTMENT].Value?.ToString(),
+                            DisplayName = userEntry.Properties[LdapAttributes.DISPLAYNAME].Value?.ToString(),
+                            Email = userEntry.Properties[LdapAttributes.EMAIL].Value?.ToString(),
+                            Title = userEntry.Properties[LdapAttributes.TITLE].Value?.ToString(),
+                            LastPasswordSet = principal.LastPasswordSet.GetValueOrDefault()
+                        };
+                        users.Add(info);
+                    }
+                }
+            }
+            return users;
         }
 
         /// <summary>

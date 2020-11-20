@@ -39,5 +39,10 @@ namespace MyDomainPasswordChange.Management
         /// The user's email address.
         /// </summary>
         public string Email { get; set; }
+
+        /// <summary>
+        /// The last time when the password was setted.
+        /// </summary>
+        public DateTime LastPasswordSet { get; set; }
     }
 }

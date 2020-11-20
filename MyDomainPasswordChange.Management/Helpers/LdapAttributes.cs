@@ -21,5 +21,7 @@
         public static readonly string PRINCIPAL_NAME = "userPrincipalName";
         public static readonly string STREET = "street";
         public static readonly string JPEG_PHOTO = "jpegPhoto";
+        public static readonly string PASSWORD_LAST_SET = "pwdLastSet";
+        public static readonly string OBJECT_CLASS = "objectClass";
     }
 }
