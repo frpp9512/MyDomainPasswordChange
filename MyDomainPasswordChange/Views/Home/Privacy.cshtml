@@ -2,11 +2,66 @@
     ViewData["Title"] = "Acerca de la aplicación";
 }
 
-<div class="container">
-    <mail role="main">
-        <h1>Servicio de cambio de contraseña del dominio</h1>
-        <div class="text-center">
-            <img src="~/img/password_logo.png" class="figure-img img-fluid col-10 col-sm-7 col-lg-6 col-xl-5" />
+<div class="container mb-n5">
+    <main role="main" class="mb-5">
+        <div class="jumbotron-fluid mb-5">
+            <h1 class="display-4 mt-5">Cambio de contraseña del dominio</h1>
         </div>
-    </mail>
+        <div class="container pb-5">
+            <div class="container">
+                <article>
+                    <h4>¿Porque este servicio?</h4>
+                    <p>
+                        En nuestra empresa existe un número importante de usuarios que acceden exclusivamente via móvil a nuestros servicios internos (correo electrónico, jabber, navegación, nube empresarial, entre otros). Estos mencinados servicios se acceden a travez de unas credenciales almacenadas en el Directorio Activo de la entidad. Como norma general de seguridad informática, las contraseñas deben de cambiarse periódicamente para garantizar la máxima seguridad de todos tus datos y servicios. Cuando un usuario se encuentra trabajando normalmente en una computadora de escritorio dentro de la red empresarial, recibirá avisos períodicos por el sistema operativo acerca de el tiempo restante antes de que la contraseña expire, además de que cuando esto suceda se le permitirá instantáneamente cambiarla. Cuando accedes a travéz de los dispositivos externos a la red a travez de nuestra VPN (con acceso en la APN Ingeco), este sistema de avisos no es posible, por lo que las contraseñas de estos usuario exirarán y automaticamente perderan el acceso a sus servicios hasta que la contraseña no sea actualizada.
+                    </p>
+                    <p>
+                        El Servicio de Cambio de Contraseñas del dominio surge precisamente para lograr que todos los usuarios (los que acceden desde la red empresarial y los que acceden a travez de la VPN) puedan ser notificados oportunamente de tiempo de vencimiento de su contraseña y cuenten con una vía de acceso para cambiarla.
+                    </p>
+                </article>
+            </div>
+            <div class="container">
+                <h4>Características del servicio</h4>
+                <div class="row">
+                    <div class="col-12 col-lg-4 col-sm-4 text-center p-2">
+                        <img src="~/img/https.png" class="rounded-circle w-100" />
+                        <div>
+                            <h5>Acceso web cifrado</h5>
+                            <p>
+                                La plataforma es accesible via web utilizando acceso cifrado via HTTPS. Puede ser abierto desde cualquier navegador actual (Chrome, Edge, Firefox, etc.)
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-4 col-sm-4 text-center p-2">
+                        <img src="~/img/email.png" class="rounded-circle w-100" />
+                        <div>
+                            <h5>Notificaciones vía correo electrónico</h5>
+                            <p>
+                                Recibirá todas las notificaciones referentes al estado de vencimiento de su contraseña, así como alertas de intentos fallidos y cambios realizados a tu clave de acceso.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-4 col-sm-4 text-center p-2">
+                        <img src="~/img/security.png" class="rounded-circle w-100" />
+                        <div>
+                            <h5>Seguridad</h5>
+                            <p>
+                                Implementa varias capas de seguridad para garantizar al máximo la protección de sus credenciales.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="container">
+                <article>
+                    <h4>Desarrollo</h4>
+                    <p>
+                        El sistema fue desarrollado en la tecnología <a href="https://dotnet.microsoft.com/apps/aspnet">ASP.NET</a> en la plataforma <a href="https://dotnet.microsoft.com/">.NET</a>, en su <a href="https://devblogs.microsoft.com/dotnet/announcing-net-5-0/">Versión 5</a>. Fue usado como IDE de desarrollo <a href="https://visualstudio.microsoft.com/vs/community/">Visual Studio 2019 Community</a>. El lenguaje de programación utilizado para la lógica fue <a href="https://docs.microsoft.com/en-us/dotnet/csharp/">C#</a> en su <a href="https://docs.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-9">Versión 9.0</a>.
+                    </p>
+                    <p>
+                        El proyecto sigue los estádares del código abierto y el proyecto esta publicado en la plataforma <a href="https://github.com/">GitHub</a>, accesible desde el siguiente <a href="https://github.com/frpp9512/MyDomainPasswordChange">enlace</a>.
+                    </p>
+                </article>
+            </div>
+        </div>
+    </main>
 </div>

@@ -21,7 +21,6 @@ namespace MyDomainPasswordChange.Managers
         private Timer _timer;
         private bool _sendingMails = false;
         private DateTime _lastEmailSended = DateTime.MinValue;
-        private int _refreshConfigCounter = 0;
 
         /// <summary>
         /// Creates a new instance of the <see cref="MyMailService"/>.
@@ -46,26 +45,27 @@ namespace MyDomainPasswordChange.Managers
             if (!_sendingMails && _mailQueue.Any())
             {
                 var settings = _settingsProvider.GetMailSettings();
-                if ((DateTime.Now - _lastEmailSended).TotalSeconds > settings.MailIntervalInSeconds)
+                var now = DateTime.Now;
+                if ((now - _lastEmailSended).TotalSeconds > settings.MailIntervalInSeconds * 1.30)
                 {
                     _sendingMails = true;
                     var mailSended = 0;
                     while (_mailQueue.Any() && mailSended < settings.MaxMailPerInterval)
                     {
-                        await SendQueuedMail(_mailQueue.Dequeue());
-                        mailSended++;
+                        try
+                        {
+                            await SendMail(_mailQueue.Dequeue());
+                            mailSended++;
+                        }
+                        catch (SmtpCommandException ex)
+                        {
+                            Console.WriteLine($"Exception founded sending email: {ex.Message}");
+                            return;
+                        }
                     }
                     _lastEmailSended = DateTime.Now;
-                    _sendingMails = false; 
+                    _sendingMails = false;
                 }
-            }
-
-            // Update the counter for refresh the configuration
-            _refreshConfigCounter++;
-            // Check if the conter arrives to the setting and if it does, refresh the configuration
-            if (_refreshConfigCounter >= _settings.RefreshConfigurationEvery)
-            {
-                _settings = _settingsProvider.GetMailSettings();
             }
         }
 
@@ -74,7 +74,7 @@ namespace MyDomainPasswordChange.Managers
         /// </summary>
         /// <param name="request">The sending email data.</param>
         /// <returns></returns>
-        private async Task SendQueuedMail(MailRequest request)
+        private async Task SendMail(MailRequest request)
         {
             var email = new MimeMessage
             {

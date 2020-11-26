@@ -41,11 +41,6 @@ namespace MyDomainPasswordChange.Management
         public int RefreshQueueInterval { get; set; }
 
         /// <summary>
-        /// Defines that the configuration should be updated every X queue refresh updates.
-        /// </summary>
-        public int RefreshConfigurationEvery { get; set; }
-
-        /// <summary>
         /// The maximun sending email amount per time interval.
         /// </summary>
         public int MaxMailPerInterval { get; set; }
