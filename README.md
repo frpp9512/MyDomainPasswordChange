@@ -49,7 +49,7 @@
     <p>
       La solución cuenta con 3 proyectos:
       <ul>
-          <li>Aplicación web <span><strong>MyDomainPasswordChange</strong></span></li>
+          <li>Aplicación web: <span><strong>MyDomainPasswordChange</strong></span></li>
           <li>Librería de gestión: <span><strong>MyDomainPasswordChange.Management</strong></span></li>
           <li>Servicio para el chequeo y notificación: <span><strong>PasswordExpirationCheckService</strong></span></li>
       </ul>
