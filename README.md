@@ -9,7 +9,7 @@
 </article>
 
 <div class="container">
-                <h4>Características del servicio</h4>
+                <h3>Características del servicio</h3>
                 <div class="row">
                     <div class="col-12 col-lg-4 col-sm-4 text-center p-2">
                         <div>
@@ -47,7 +47,12 @@
     </p>
     <h4>Estructura de la solución</h4>
     <p>
-      
+      La solución cuenta con 3 proyectos:
+      <ul>
+          <li>Aplicación web <span><strong>MyDomainPasswordChange</strong></span></li>
+          <li>Librería de gestión: <span><strong>MyDomainPasswordChange.Management</strong></span></li>
+          <li>Servicio para el chequeo y notificación: <span><strong>PasswordExpirationCheckService</strong></span></li>
+      </ul>
     </p>
   </article>
 </div>
