@@ -2,7 +2,7 @@
 <h6>Aplicación web para la actualización de la contraseña de los usuarios de un dominio basado en Directorio Activo</h6>
 
 <article>
-    <h4>¿Porque este servicio?</h4>
+    <h3>¿Porque este servicio?</h3>
     <p>
         El Servicio de Cambio de Contraseñas del dominio surge precisamente para lograr que todos los usuarios (los que acceden desde la red empresarial y los que acceden a travez de la VPN) puedan ser notificados oportunamente de tiempo de vencimiento de su contraseña y cuenten con una vía de acceso para cambiarla.
     </p>
@@ -13,7 +13,7 @@
                 <div class="row">
                     <div class="col-12 col-lg-4 col-sm-4 text-center p-2">
                         <div>
-                            <h5>Acceso web cifrado</h5>
+                            <h4>Acceso web cifrado</h4>
                             <p>
                                 La plataforma es accesible via web utilizando acceso cifrado via HTTPS. Puede ser abierto desde cualquier navegador actual (Chrome, Edge, Firefox, etc.)
                             </p>
@@ -21,7 +21,7 @@
                     </div>
                     <div class="col-12 col-lg-4 col-sm-4 text-center p-2">
                         <div>
-                            <h5>Notificaciones vía correo electrónico</h5>
+                            <h4>Notificaciones vía correo electrónico</h4>
                             <p>
                                 Recibirá todas las notificaciones referentes al estado de vencimiento de su contraseña, así como alertas de intentos fallidos y cambios realizados a tu clave de acceso.
                             </p>
@@ -29,7 +29,7 @@
                     </div>
                     <div class="col-12 col-lg-4 col-sm-4 text-center p-2">
                         <div>
-                            <h5>Seguridad</h5>
+                            <h4>Seguridad</h4>
                             <p>
                                 Implementa varias capas de seguridad para garantizar al máximo la protección de sus credenciales.
                             </p>
