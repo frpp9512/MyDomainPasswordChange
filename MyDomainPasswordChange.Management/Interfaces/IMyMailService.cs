@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace MyDomainPasswordChange
+namespace MyDomainPasswordChange.Management
 {
     /// <summary>
     /// Defines a class with the capability of send emails.
