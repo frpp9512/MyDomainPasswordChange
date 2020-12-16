@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using MyDomainPasswordChange.Data.AspNetExtensions;
 using MyDomainPasswordChange.Management;
 using MyDomainPasswordChange.Managers;
 
@@ -28,6 +29,8 @@ namespace MyDomainPasswordChange
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddHttpContextAccessor();
+            services.AddSqliteDataContext()
+                    .AddPasswordHistoryManager();
             services.AddPasswordManagement();
             services.AddMailNotifications();
             services.AddTransient<IChallenger, Challenger>();
