@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
+using MyDomainPasswordChange.Data.Interfaces;
 using MyDomainPasswordChange.Management;
 using MyDomainPasswordChange.Models;
 
@@ -20,6 +21,7 @@ namespace MyDomainPasswordChange.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         private readonly MyDomainPasswordManagement _passwordManagement;
+        private readonly IPasswordHistoryManager _historyManager;
         private readonly IMailNotificator _mailNotificator;
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly IConfiguration _configuration;
@@ -28,6 +30,7 @@ namespace MyDomainPasswordChange.Controllers
 
         public HomeController(ILogger<HomeController> logger,
                               MyDomainPasswordManagement passwordManagement,
+                              IPasswordHistoryManager historyManager,
                               IMailNotificator mailNotificator,
                               IWebHostEnvironment webHostEnvironment,
                               IConfiguration configuration,
@@ -36,6 +39,7 @@ namespace MyDomainPasswordChange.Controllers
         {
             _logger = logger;
             _passwordManagement = passwordManagement;
+            _historyManager = historyManager;
             _mailNotificator = mailNotificator;
             _webHostEnvironment = webHostEnvironment;
             _configuration = configuration;
@@ -61,10 +65,27 @@ namespace MyDomainPasswordChange.Controllers
                 }
                 try
                 {
+                    if (!_passwordManagement.AuthenticateUser(viewModel.Username, viewModel.Password))
+                    {
+                        throw new BadPasswordException($"La contraseña escrita no es correcta.");
+                    }
+                    if (await _historyManager.AccountHasEntries(viewModel.Username))
+                    {
+                        if (await _historyManager.CheckPasswordHistoryAsync(viewModel.Username, viewModel.NewPassword, _configuration.GetValue<int>("PasswordHistoryCheck")))
+                        {
+                            ModelState.AddModelError("PasswordUsed", "La nueva contraseña ya sido utilizada, debe de definir una contraseña nueva.");
+                            return View("Index", viewModel);
+                        }
+                    }
+                    else
+                    {
+                        await _historyManager.RegisterPasswordAsync(viewModel.Username, viewModel.Password);
+                    }
                     _passwordManagement.ChangeUserPassword(viewModel.Username, viewModel.Password, viewModel.NewPassword);
+                    await _historyManager.RegisterPasswordAsync(viewModel.Username, viewModel.NewPassword);
                     var userInfo = _passwordManagement.GetUserInfo(viewModel.Username);
                     await _mailNotificator.SendChangePasswordNotificationAsync(viewModel.Username);
-                    return RedirectToAction("ChangePasswordSuccess", new UserViewModel 
+                    return RedirectToAction("ChangePasswordSuccess", new UserViewModel
                     {
                         AccountName = userInfo.AccountName,
                         Company = userInfo.Company,

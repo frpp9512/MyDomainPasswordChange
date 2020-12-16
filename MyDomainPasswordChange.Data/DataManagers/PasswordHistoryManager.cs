@@ -10,6 +10,9 @@ using System.Threading.Tasks;
 
 namespace MyDomainPasswordChange.Data.DataManagers
 {
+    /// <summary>
+    /// Manages the password's history of the users.
+    /// </summary>
     public class PasswordHistoryManager : IPasswordHistoryManager
     {
         private readonly DataContext _dataContext;
@@ -20,7 +23,7 @@ namespace MyDomainPasswordChange.Data.DataManagers
             _dataContext.Database.EnsureCreated();
         }
 
-        public async Task RegisterPassword(string accountName, string password)
+        public async Task RegisterPasswordAsync(string accountName, string password)
         {
             var entry = new PasswordHistoryEntry
             {
@@ -32,7 +35,7 @@ namespace MyDomainPasswordChange.Data.DataManagers
             await _dataContext.SaveChangesAsync();
         }
 
-        public async Task<bool> CheckPasswordHistory(string accountName, string password, int passwordHistoryCount)
+        public async Task<bool> CheckPasswordHistoryAsync(string accountName, string password, int passwordHistoryCount)
         {
             var history = await LoadPasswordHistoryForUserAsync(accountName, passwordHistoryCount);
             if (history is not null && history.Any())
@@ -50,13 +53,20 @@ namespace MyDomainPasswordChange.Data.DataManagers
 
         private async Task<IEnumerable<PasswordHistoryEntry>> LoadPasswordHistoryForUserAsync(string accountName, int passwordHistoryCount)
         {
-            var results = await _dataContext.HistoryEntries
+            if (_dataContext.HistoryEntries.Any())
+            {
+                var results = await _dataContext.HistoryEntries
                                             .Where(e => e.AccountName == accountName)
                                             .OrderByDescending(e => e.Updated)
                                             .Take(passwordHistoryCount)
                                             .ToListAsync();
 
-            return results;
+                return results;
+            }
+            return null;
         }
+
+        public async Task<bool> AccountHasEntries(string accountName) 
+            => await _dataContext.HistoryEntries.Where(e => e.AccountName == accountName).AnyAsync();
     }
 }

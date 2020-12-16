@@ -8,9 +8,15 @@ using System.Threading.Tasks;
 
 namespace MyDomainPasswordChange.Data.Contexts
 {
+    /// <summary>
+    /// The Data Context definition with all the entities managed in the application.
+    /// </summary>
     public abstract class DataContext : DbContext
     {
-        public DbSet<PasswordHistoryEntry> HistoryEntries;
+        /// <summary>
+        /// The history of passwords used by the users.
+        /// </summary>
+        public DbSet<PasswordHistoryEntry> HistoryEntries { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
