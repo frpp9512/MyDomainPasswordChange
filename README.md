@@ -50,7 +50,10 @@
       La solución cuenta con 3 proyectos:
       <ul>
           <li>Aplicación web: <span><strong>MyDomainPasswordChange</strong></span></li>
-          <li>Librería de gestión: <span><strong>MyDomainPasswordChange.Management</strong></span></li>
+          <li>Librería de la lógica: <span><strong>MyDomainPasswordChange.Management</strong></span></li>
+          <li>Librería de gestión de datos: <span>MyDomainPasswordChange.Data</span></li>
+          <li>Librería de gestión de datos (Implementación para Sqlite): <span>MyDomainPasswordChange.Data.Sqlite</span></li>
+          <li>Librería de extensiones para configurar el los servicios de datos: <span>MyDomainPasswordChange.Data.AspNetExtensions</span></li>
           <li>Servicio para el chequeo y notificación: <span><strong>PasswordExpirationCheckService</strong></span></li>
       </ul>
     </p>
