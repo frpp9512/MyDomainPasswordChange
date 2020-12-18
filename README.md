@@ -55,11 +55,3 @@
       </ul>
     </p>
   </article>
-  <h3>Detalles de los proyectos</h3>
-  <article>
-    <h5>MyDomainPasswordChange</h5>
-    <p>
-        
-    </p>
-  </article>
-</div>
