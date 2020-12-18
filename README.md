@@ -51,9 +51,9 @@
       <ul>
           <li>Aplicación web: <span><strong>MyDomainPasswordChange</strong></span></li>
           <li>Librería de la lógica: <span><strong>MyDomainPasswordChange.Management</strong></span></li>
-          <li>Librería de gestión de datos: <span>MyDomainPasswordChange.Data</span></li>
-          <li>Librería de gestión de datos (Implementación para Sqlite): <span>MyDomainPasswordChange.Data.Sqlite</span></li>
-          <li>Librería de extensiones para configurar el los servicios de datos: <span>MyDomainPasswordChange.Data.AspNetExtensions</span></li>
+          <li>Librería de gestión de datos: <span><strong>MyDomainPasswordChange.Data</span></strong></li>
+          <li>Librería de gestión de datos (Implementación para Sqlite): <span><strong>MyDomainPasswordChange.Data.Sqlite</strong></span></li>
+          <li>Librería de extensiones para configurar el los servicios de datos: <span><strong>MyDomainPasswordChange.Data.AspNetExtensions</strong></span></li>
           <li>Servicio para el chequeo y notificación: <span><strong>PasswordExpirationCheckService</strong></span></li>
       </ul>
     </p>
