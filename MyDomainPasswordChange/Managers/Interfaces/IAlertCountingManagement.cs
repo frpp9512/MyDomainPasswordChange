@@ -11,5 +11,6 @@ namespace MyDomainPasswordChange
     {
         public void CountChallengeFail();
         public void CountPasswordFail(string accountName);
+        public void CountAuthFail();
     }
 }

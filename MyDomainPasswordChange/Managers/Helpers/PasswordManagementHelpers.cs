@@ -22,7 +22,7 @@ namespace MyDomainPasswordChange
         public static IServiceCollection AddPasswordManagement(this IServiceCollection services)
         {
             services.AddTransient<IBindCredentialsProvider>(services => new BindCredentialsProvider(services.GetService<IConfiguration>()));
-            services.AddTransient<MyDomainPasswordManagement>();
+            services.AddTransient<IDomainPasswordManagement, MyDomainPasswordManagement>();
             return services;
         }
     }

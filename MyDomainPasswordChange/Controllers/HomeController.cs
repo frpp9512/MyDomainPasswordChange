@@ -20,7 +20,7 @@ namespace MyDomainPasswordChange.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-        private readonly MyDomainPasswordManagement _passwordManagement;
+        private readonly IDomainPasswordManagement _passwordManagement;
         private readonly IPasswordHistoryManager _historyManager;
         private readonly IMailNotificator _mailNotificator;
         private readonly IWebHostEnvironment _webHostEnvironment;
@@ -29,7 +29,7 @@ namespace MyDomainPasswordChange.Controllers
         private readonly IAlertCountingManagement _countingManagement;
 
         public HomeController(ILogger<HomeController> logger,
-                              MyDomainPasswordManagement passwordManagement,
+                              IDomainPasswordManagement passwordManagement,
                               IPasswordHistoryManager historyManager,
                               IMailNotificator mailNotificator,
                               IWebHostEnvironment webHostEnvironment,

@@ -145,5 +145,28 @@ namespace MyDomainPasswordChange
         private uint GetBadChallengeTriesAlarm() => _configuration.GetValue<uint>("badChallengeTriesAlarm");
                 
         private uint GetBadChallengeTriesOffense() => _configuration.GetValue<uint>("badChallengeTriesOffense");
+
+        public void CountAuthFail()
+        {
+            var remoteIp = _contextAccessor.HttpContext.Connection.RemoteIpAddress.ToString();
+            var counterAlertKey = $"challenge-offense-{remoteIp}";
+            if (_counterManager.ExistCounter(counterAlertKey))
+            {
+                if (!_counterManager.HasAlarm(counterAlertKey))
+                {
+                    _counterManager.SetCounterAlarm(counterAlertKey, 5, (key, tries) => { });
+                }
+                if ((DateTime.Now - _counterManager.GetCounterLastCount(counterAlertKey)).TotalMinutes > _alarmRefresh)
+                {
+                    _counterManager.ResetCounter(counterAlertKey);
+                }
+                _counterManager.Count(counterAlertKey);
+            }
+            else
+            {
+                _counterManager.AddCounter(counterAlertKey, "");
+                CountChallengeFail();
+            }
+        }
     }
 }

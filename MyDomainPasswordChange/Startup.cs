@@ -37,6 +37,16 @@ namespace MyDomainPasswordChange
             services.AddSingleton<IIpAddressBlacklist, IpAddressBlacklist>();
             services.AddSingleton<IAlertCountingManagement, AlertCountingManagement>();
             services.AddScoped<BlacklistFilter>();
+
+            services.AddLogging();
+            services.AddAuthentication("CookieAuth")
+                .AddCookie("CookieAuth", config =>
+                {
+                    config.Cookie.Name = "CookieAuth";
+                    config.LoginPath = "/Auth/Login";
+                    config.LogoutPath = "/Auth/Logout";
+                    config.AccessDeniedPath = "/Auth/AccessDenied";
+                });
             services.AddControllersWithViews();
         }
 
@@ -59,6 +69,7 @@ namespace MyDomainPasswordChange
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

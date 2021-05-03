@@ -12,7 +12,7 @@ namespace MyDomainPasswordChange.Management
     /// <summary>
     /// Manages the LDAP user accounts for getting information and changing passwords.
     /// </summary>
-    public class MyDomainPasswordManagement
+    public class MyDomainPasswordManagement : IDomainPasswordManagement
     {
         private readonly IBindCredentialsProvider _credentialsProvider;
 
@@ -68,7 +68,7 @@ namespace MyDomainPasswordChange.Management
                     user.SetPassword(newPassword);
                 }
                 catch (PasswordException ex)
-                {                    
+                {
                     if (ex.Message.Contains("0x800708C5"))
                     {
                         throw new PasswordChangeException($"La nueva contraseña no cumple con los requisitos de seguridad requeridas. Siempre incluya mayúsculas, números y símbolos para hacer su contraseña más segura.");
@@ -117,6 +117,19 @@ namespace MyDomainPasswordChange.Management
 
             var userEntry = results.GetDirectoryEntry();
 
+            var principal = GetUser(accountName);
+            bool domainAdmin = false;
+
+            foreach (var group in principal.GetAuthorizationGroups())
+            {
+                if (group.SamAccountName == "Domain Admins" && group.ContextType == ContextType.Domain)
+                {
+                    domainAdmin = true;
+                    break;
+                }
+            }
+
+
             var info = new UserInfo
             {
                 AccountName = accountName,
@@ -125,9 +138,11 @@ namespace MyDomainPasswordChange.Management
                 DisplayName = userEntry.Properties[LdapAttributes.DISPLAYNAME].Value?.ToString(),
                 Email = userEntry.Properties[LdapAttributes.EMAIL].Value?.ToString(),
                 Title = userEntry.Properties[LdapAttributes.TITLE].Value?.ToString(),
-                LastPasswordSet = GetUser(accountName).LastPasswordSet.GetValueOrDefault()
+                LastPasswordSet = GetUser(accountName).LastPasswordSet.GetValueOrDefault(),
+                Enabled = principal.Enabled.GetValueOrDefault(false),
+                IsDomainAdmin = domainAdmin
             };
-            
+
             return info;
         }
 
@@ -198,7 +213,7 @@ namespace MyDomainPasswordChange.Management
                 var ms = new MemoryStream(photo);
                 var image = Image.FromStream(ms);
 
-                return image; 
+                return image;
             }
 
             return null;

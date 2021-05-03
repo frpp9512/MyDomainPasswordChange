@@ -16,7 +16,7 @@ namespace MyDomainPasswordChange
         private readonly IConfiguration _configuration;
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly MyDomainPasswordManagement _passwordManagement;
+        private readonly IDomainPasswordManagement _passwordManagement;
 
         private string AdminEmail => _configuration.GetValue<string>("adminEmail");
         private int PasswordExpirationDays => _configuration.GetValue<int>("passwordExpirationDays");
@@ -26,7 +26,7 @@ namespace MyDomainPasswordChange
                                IConfiguration configuration,
                                IWebHostEnvironment webHostEnvironment,
                                IHttpContextAccessor httpContextAccessor,
-                               MyDomainPasswordManagement passwordManagement)
+                               IDomainPasswordManagement passwordManagement)
         {
             _mailService = mailService;
             _configuration = configuration;
