@@ -15,17 +15,25 @@ namespace MyDomainPasswordChange.Controllers
     {
         private readonly ILogger<AuthController> _logger;
         private readonly IDomainPasswordManagement _passwordManagement;
+        private readonly IDependenciesGroupsManagement _groupsManagement;
         private readonly IAlertCountingManagement _alertCountingManagement;
 
-        public AuthController(ILogger<AuthController> logger, IDomainPasswordManagement passwordManagement, IAlertCountingManagement alertCountingManagement)
+        public AuthController(ILogger<AuthController> logger,
+                              IDomainPasswordManagement passwordManagement,
+                              IDependenciesGroupsManagement groupsManagement,
+                              IAlertCountingManagement alertCountingManagement)
         {
             _logger = logger;
             _passwordManagement = passwordManagement;
+            _groupsManagement = groupsManagement;
             _alertCountingManagement = alertCountingManagement;
         }
 
         [HttpGet]
-        public IActionResult Login(string returnUrl) => View(new LoginViewModel { ReturnUrl = returnUrl ?? "/Management" });
+        public IActionResult Login(string returnUrl = "/Management") 
+            => User.Identity.IsAuthenticated 
+                ? Redirect(returnUrl) 
+                : View(new LoginViewModel { ReturnUrl = returnUrl });
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -37,14 +45,30 @@ namespace MyDomainPasswordChange.Controllers
                 {
                     var user = _passwordManagement.GetUserInfo(viewModel.Username);
 
-                    if (user.Enabled && user.IsDomainAdmin)
+                    if (user.Enabled && 
+                        user.IsDomainAdmin && 
+                        user.Groups.Any(g => 
+                            _groupsManagement.DefineIfDependencyDeclaration(g.AccountName) ||
+                            _groupsManagement.DefineIfGlobalDeclaration(g.AccountName)))
                     {
                         var claims = new List<Claim>
                         {
                             new Claim(ClaimTypes.NameIdentifier, user.AccountName),
                             new Claim(ClaimTypes.Name, user.DisplayName),
-                            new Claim(ClaimTypes.Email, user.Email)
+                            new Claim(ClaimTypes.Email, user.Email),
                         };
+                        if (user.Groups.Any(g => _groupsManagement.DefineIfGlobalDeclaration(g.AccountName)))
+                        {
+                            claims.Add(new Claim(ClaimTypes.Role, "GlobalAdmin"));
+                        }
+                        else
+                        {
+                            claims.Add(new Claim(ClaimTypes.Role, "DependencyAdmin"));
+                        }
+                        var dependencyGroups = string.Join(";", user.Groups.Where(g => _groupsManagement.ExistDelclarationWithName(g.AccountName))
+                                                                  .Select(g => g.AccountName)
+                                                                  .ToArray());
+                        claims.Add(new Claim("DependencyGroups", dependencyGroups));
                         var identity = new ClaimsIdentity(claims, "CookieAuth");
                         var principal = new ClaimsPrincipal(identity);
                         await HttpContext.SignInAsync("CookieAuth",
@@ -59,13 +83,13 @@ namespace MyDomainPasswordChange.Controllers
             return View(viewModel);
         }
 
-        public async Task<IActionResult> Logout()
+        public async Task<IActionResult> Logout(string returnUrl = "/")
         {
             if (User.Identity.IsAuthenticated)
             {
                 await HttpContext.SignOutAsync();
             }
-            return Redirect("/");
+            return Redirect(returnUrl);
         }
     }
 }

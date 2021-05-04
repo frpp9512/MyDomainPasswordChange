@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MyDomainPasswordChange.Management.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -21,19 +22,9 @@ namespace MyDomainPasswordChange.Management
         public string DisplayName { get; set; }
 
         /// <summary>
-        /// The user's job title.
+        /// The description of the user.
         /// </summary>
-        public string Title { get; set; }
-
-        /// <summary>
-        /// The specified user's company.
-        /// </summary>
-        public string Company { get; set; }
-
-        /// <summary>
-        /// The specified user's deparment.
-        /// </summary>
-        public string Department { get; set; }
+        public string Description { get; set; }
 
         /// <summary>
         /// The user's email address.
@@ -53,6 +44,11 @@ namespace MyDomainPasswordChange.Management
         /// <summary>
         /// <see langword="true"/> if the user belongs to the Domain Admin's group.
         /// </summary>
-        public bool IsDomainAdmin { get; internal set; }
+        public bool IsDomainAdmin => Groups.Any(g => g.AccountName == "Domain Admins");
+
+        /// <summary>
+        /// The set of Security Groups which the user belongs to.
+        /// </summary>
+        public List<GroupInfo> Groups { get; set; } = new List<GroupInfo>();
     }
 }

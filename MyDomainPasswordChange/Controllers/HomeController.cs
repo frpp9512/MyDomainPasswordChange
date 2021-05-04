@@ -88,11 +88,9 @@ namespace MyDomainPasswordChange.Controllers
                     return RedirectToAction("ChangePasswordSuccess", new UserViewModel
                     {
                         AccountName = userInfo.AccountName,
-                        Company = userInfo.Company,
-                        Department = userInfo.Department,
                         DisplayName = userInfo.DisplayName,
+                        Description = userInfo.Description,
                         Email = userInfo.Email,
-                        Title = userInfo.Title,
                         PasswordExpirationDays = _configuration.GetValue<int>("passwordExpirationDays")
                     });
                 }

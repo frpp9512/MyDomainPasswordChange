@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MyDomainPasswordChange.Management.Models;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.DirectoryServices;
@@ -43,7 +44,11 @@ namespace MyDomainPasswordChange.Management
         /// </summary>
         /// <param name="accountName">The account name to determine if exists an user account with.</param>
         /// <returns><see langword="true"/> if exists an user account with the provided name.</returns>
-        public bool UserExists(string accountName) => GetUser(accountName) is not null;
+        public bool UserExists(string accountName)
+        {
+            using var context = GetPrincipalContext();
+            return GetUserPrincipal(context, accountName) is not null;
+        }
 
         /// <summary>
         /// Changes the password of the specified user.
@@ -56,7 +61,8 @@ namespace MyDomainPasswordChange.Management
         /// <param name="newPassword"></param>
         public void ChangeUserPassword(string accountName, string password, string newPassword)
         {
-            var user = GetUser(accountName);
+            using var context = GetPrincipalContext();
+            var user = GetUserPrincipal(context, accountName);
             if (user != null)
             {
                 if (!AuthenticateUser(accountName, password))
@@ -87,16 +93,29 @@ namespace MyDomainPasswordChange.Management
         /// </summary>
         /// <param name="accountName">The account name of the user to search for.</param>
         /// <returns>An instance of <see cref="UserPrincipal"/> that represents the LDAP user founded, otherwise <see langword="null"/>.</returns>
-        private UserPrincipal GetUser(string accountName)
+        private static UserPrincipal GetUserPrincipal(PrincipalContext context, string accountName)
         {
-            var context = new PrincipalContext(ContextType.Domain,
-                                               _credentialsProvider.GetLdapServer(),
-                                               _credentialsProvider.GetLdapSearchBase(),
-                                               _credentialsProvider.GetBindUsername(),
-                                               _credentialsProvider.GetBindPassword());
             var searchUser = UserPrincipal.FindByIdentity(context, IdentityType.SamAccountName, accountName);
             return searchUser;
         }
+
+        /// <summary>
+        /// Gets the <see cref="PrincipalContext"/> with the configured settings.
+        /// </summary>
+        /// <returns></returns>
+        private PrincipalContext GetPrincipalContext() => new(ContextType.Domain,
+                                                                _credentialsProvider.GetLdapServer(),
+                                                                _credentialsProvider.GetLdapSearchBase(),
+                                                                _credentialsProvider.GetBindUsername(),
+                                                                _credentialsProvider.GetBindPassword());
+
+        /// <summary>
+        /// Get the directory entry with the configured credentials.
+        /// </summary>
+        /// <returns></returns>
+        private DirectoryEntry GetDirectoryEntry() => new($"LDAP://{_credentialsProvider.GetLdapServer()}",
+                                                            _credentialsProvider.GetBindUsername(),
+                                                            _credentialsProvider.GetBindPassword());
 
         /// <summary>
         /// Gets the LDAP user info with the specified account name.
@@ -105,45 +124,62 @@ namespace MyDomainPasswordChange.Management
         /// <returns>An instance of <see cref="UserInfo"/> with the info the LDAP user founded.</returns>
         public UserInfo GetUserInfo(string accountName)
         {
-            var entry = new DirectoryEntry($"LDAP://{_credentialsProvider.GetLdapServer()}",
-                                           _credentialsProvider.GetBindUsername(),
-                                           _credentialsProvider.GetBindPassword());
-            var searcher = new DirectorySearcher(entry)
-            {
-                Filter = $"{LdapAttributes.ACCOUNT_NAME}={accountName}"
-            };
+            using var context = GetPrincipalContext();
+            var userPrincipal = GetUserPrincipal(context, accountName);
 
-            var results = searcher.FindOne();
-
-            var userEntry = results.GetDirectoryEntry();
-
-            var principal = GetUser(accountName);
-            bool domainAdmin = false;
-
-            foreach (var group in principal.GetAuthorizationGroups())
-            {
-                if (group.SamAccountName == "Domain Admins" && group.ContextType == ContextType.Domain)
-                {
-                    domainAdmin = true;
-                    break;
-                }
-            }
-
-
-            var info = new UserInfo
-            {
-                AccountName = accountName,
-                Company = userEntry.Properties[LdapAttributes.COMPANY].Value?.ToString(),
-                Department = userEntry.Properties[LdapAttributes.DEPARTMENT].Value?.ToString(),
-                DisplayName = userEntry.Properties[LdapAttributes.DISPLAYNAME].Value?.ToString(),
-                Email = userEntry.Properties[LdapAttributes.EMAIL].Value?.ToString(),
-                Title = userEntry.Properties[LdapAttributes.TITLE].Value?.ToString(),
-                LastPasswordSet = GetUser(accountName).LastPasswordSet.GetValueOrDefault(),
-                Enabled = principal.Enabled.GetValueOrDefault(false),
-                IsDomainAdmin = domainAdmin
-            };
+            var info = GetUserInfoFromPrincipal(userPrincipal, true);
 
             return info;
+        }
+
+        /// <summary>
+        /// Gets the info of the group with the specified name.
+        /// </summary>
+        /// <param name="groupName">The name of the group to obtain the <see cref="GroupInfo"/> instance from.</param>
+        /// <returns></returns>
+        public async Task<GroupInfo> GetGroupInfoByNameAsync(string groupName)
+        {
+            using var context = GetPrincipalContext();
+            var principal = await Task.Run(() => GroupPrincipal.FindByIdentity(context, groupName));
+            return GetGroupInfoFromPrincipal(principal);
+        }
+
+        /// <summary>
+        /// Gets a <see cref="GroupInfo"/> instance from <see cref="GroupPrincipal"/>.
+        /// </summary>
+        /// <param name="principal"></param>
+        /// <returns></returns>
+        private static GroupInfo GetGroupInfoFromPrincipal(GroupPrincipal principal)
+        {
+            return new GroupInfo
+            {
+                AccountName = principal.SamAccountName,
+                DistinguishedName = principal.DistinguishedName,
+                DisplayName = principal.DisplayName,
+                Description = principal.Description
+            };
+        }
+
+        /// <summary>
+        /// Load the users that belongs to the specified group.
+        /// </summary>
+        /// <param name="group">The group which the users belongs to.</param>
+        /// <returns></returns>
+        public async Task<List<UserInfo>> GetActiveUsersInfoFromGroupAsync(GroupInfo group)
+        {
+            using var context = GetPrincipalContext();
+            var principal = await Task.Run(() => GroupPrincipal.FindByIdentity(context, group.AccountName));
+            var users = new List<UserInfo>();
+            foreach (UserPrincipal member in principal.GetMembers())
+            {
+                if (member.Enabled.GetValueOrDefault())
+                {
+                    var user = GetUserInfoFromPrincipal(member);
+                    users.Add(user);
+                    user.Groups.Add(group); 
+                }
+            }
+            return users;
         }
 
         /// <summary>
@@ -152,41 +188,49 @@ namespace MyDomainPasswordChange.Management
         /// <returns>The list.</returns>
         public async Task<List<UserInfo>> GetAllActiveUsersInfo()
         {
-            var entry = new DirectoryEntry($"LDAP://{_credentialsProvider.GetLdapServer()}",
-                                           _credentialsProvider.GetBindUsername(),
-                                           _credentialsProvider.GetBindPassword());
-            var searcher = new DirectorySearcher(entry)
-            {
-                Filter = $"{LdapAttributes.OBJECT_CLASS}=user"
-            };
-
-            var results = await Task.Run(() => searcher.FindAll());
-
+            using var context = GetPrincipalContext();
+            var searcher = new PrincipalSearcher(new UserPrincipal(context) { Enabled = true });
             var users = new List<UserInfo>();
-
-            foreach (SearchResult result in results)
+            foreach (UserPrincipal result in await Task.Run(() => searcher.FindAll()))
             {
-                var userEntry = result.GetDirectoryEntry();
-                var principal = GetUser(userEntry.Properties["sAMAccountName"].Value?.ToString());
-                if (principal is not null)
-                {
-                    if (principal.Enabled.GetValueOrDefault())
-                    {
-                        var info = new UserInfo
-                        {
-                            AccountName = principal.SamAccountName,
-                            Company = userEntry.Properties[LdapAttributes.COMPANY].Value?.ToString(),
-                            Department = userEntry.Properties[LdapAttributes.DEPARTMENT].Value?.ToString(),
-                            DisplayName = userEntry.Properties[LdapAttributes.DISPLAYNAME].Value?.ToString(),
-                            Email = userEntry.Properties[LdapAttributes.EMAIL].Value?.ToString(),
-                            Title = userEntry.Properties[LdapAttributes.TITLE].Value?.ToString(),
-                            LastPasswordSet = principal.LastPasswordSet.GetValueOrDefault()
-                        };
-                        users.Add(info);
-                    }
-                }
+                users.Add(GetUserInfoFromPrincipal(result));
             }
             return users;
+        }
+
+        /// <summary>
+        /// Gets a instance of <see cref="UserInfo"/> from <see cref="UserPrincipal"/>.
+        /// </summary>
+        /// <param name="principal"></param>
+        /// <param name="loadGroups"></param>
+        /// <returns></returns>
+        private static UserInfo GetUserInfoFromPrincipal(UserPrincipal principal, bool loadGroups = false)
+        {
+            var info = new UserInfo
+            {
+                AccountName = principal.SamAccountName,
+                DisplayName = principal.DisplayName,
+                Email = principal.EmailAddress,
+                Description = principal.Description,
+                LastPasswordSet = principal.LastPasswordSet.GetValueOrDefault(),
+                Enabled = principal.Enabled.GetValueOrDefault()
+            };
+            if (loadGroups)
+            {
+                foreach (var group in principal.GetAuthorizationGroups())
+                {
+                    var gi = new GroupInfo
+                    {
+                        AccountName = group.SamAccountName,
+                        DistinguishedName = group.DistinguishedName,
+                        DisplayName = group.DisplayName,
+                        Description = group.Description
+                    };
+                    info.Groups.Add(gi);
+                }
+            }
+
+            return info;
         }
 
         /// <summary>
@@ -196,9 +240,7 @@ namespace MyDomainPasswordChange.Management
         /// <returns>A instance of <see cref="Image"/> with the founded user image, otherwise <see langword="null"/>.</returns>
         public async Task<Image> GetUserImage(string accountName)
         {
-            var entry = new DirectoryEntry($"LDAP://{_credentialsProvider.GetLdapServer()}",
-                                          _credentialsProvider.GetBindUsername(),
-                                          _credentialsProvider.GetBindPassword());
+            using var entry = GetDirectoryEntry();
             var searcher = new DirectorySearcher(entry)
             {
                 Filter = $"{LdapAttributes.ACCOUNT_NAME}={accountName}"
@@ -226,9 +268,7 @@ namespace MyDomainPasswordChange.Management
         /// <returns>The image <see cref="byte"/> array of the founded user image, otherwise <see langword="null"/>.</returns>
         public async Task<byte[]> GetUserImageBytesAsync(string accountName)
         {
-            var entry = new DirectoryEntry($"LDAP://{_credentialsProvider.GetLdapServer()}",
-                                          _credentialsProvider.GetBindUsername(),
-                                          _credentialsProvider.GetBindPassword());
+            using var entry = GetDirectoryEntry();
             var searcher = new DirectorySearcher(entry)
             {
                 Filter = $"{LdapAttributes.ACCOUNT_NAME}={accountName}"
@@ -241,5 +281,7 @@ namespace MyDomainPasswordChange.Management
                 ? userEntry.Properties[LdapAttributes.JPEG_PHOTO].Value as byte[]
                 : null;
         }
+
+        public async Task<UserInfo> GetUserInfoAsync(string accountName) => await Task.Run(() => GetUserInfo(accountName));
     }
 }

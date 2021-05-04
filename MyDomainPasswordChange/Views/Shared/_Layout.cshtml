@@ -6,6 +6,7 @@
     <title>@ViewData["Title"] - Cambio de contraseña</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" />
+    <link href="~/font-awesome/css/all.css" rel="stylesheet" />
 </head>
 <body>
     <header>
@@ -37,7 +38,13 @@
             <small>
                 @if (User.Identity.IsAuthenticated)
                 {
-                    @User.Identity.Name <a href="/Auth/Logout">Cerrar sesión</a>
+                    <span><span class="fas fa-user-alt"></span> @User.Identity.Name</span>
+                    <span><a href="/Management">[<span class="fas fa-tools"></span> Administración]</a></span>
+                    <span><a href="/Auth/Logout">[<span class="fas fa-door-open"></span> Cerrar sesión]</a></span>
+                }
+                else
+                {
+                    <span><a href="/Management">[<span class="fas fa-user"></span> Iniciar sesión]</a></span>
                 }
             </small>
         </div>
