@@ -9,6 +9,9 @@ namespace MyDomainPasswordChange
         public string Description { get; set; }
         public string Email { get; set; }
         public DateTime LastPasswordSet { get; set; }
+        public bool PendingToSetPassword => new DateTime(1, 1, 1, 0, 0, 0) == LastPasswordSet;
         public int PasswordExpirationDays { get; set; }
+        public bool Enabled { get; set; }
+        public bool PasswordNeverExpires { get; set; }
     }
 }

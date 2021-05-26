@@ -59,19 +59,32 @@ namespace MyDomainPasswordChange.Management
         /// <param name="accountName"></param>
         /// <param name="password"></param>
         /// <param name="newPassword"></param>
-        public void ChangeUserPassword(string accountName, string password, string newPassword)
+        public void ChangeUserPassword(string accountName, string password, string newPassword) 
+            => SetPassword(accountName, password, newPassword);
+
+        public void SetUserPassword(string accountName, string newPassword) 
+            => SetPassword(accountName, "", newPassword, false);
+
+        public void ResetPassword(string accountName, string tempPassword) 
+            => SetPassword(accountName, "", tempPassword, false, true);
+
+        private void SetPassword(string accountName, string password, string newPassword, bool authenticate = true, bool setAsTempPassword = false)
         {
             using var context = GetPrincipalContext();
             var user = GetUserPrincipal(context, accountName);
             if (user != null)
             {
-                if (!AuthenticateUser(accountName, password))
+                if (authenticate && !AuthenticateUser(accountName, password))
                 {
                     throw new BadPasswordException($"La contraseña escrita no es correcta.");
                 }
                 try
                 {
                     user.SetPassword(newPassword);
+                    if (setAsTempPassword)
+                    {
+                        user.ExpirePasswordNow(); 
+                    }
                 }
                 catch (PasswordException ex)
                 {
@@ -127,6 +140,11 @@ namespace MyDomainPasswordChange.Management
             using var context = GetPrincipalContext();
             var userPrincipal = GetUserPrincipal(context, accountName);
 
+            if (userPrincipal == null)
+            {
+                throw new UserNotFoundException($"The user {accountName} is not registered in the domain.");
+            }
+
             var info = GetUserInfoFromPrincipal(userPrincipal, true);
 
             return info;
@@ -176,7 +194,7 @@ namespace MyDomainPasswordChange.Management
                 {
                     var user = GetUserInfoFromPrincipal(member);
                     users.Add(user);
-                    user.Groups.Add(group); 
+                    user.Groups.Add(group);
                 }
             }
             return users;
@@ -213,7 +231,8 @@ namespace MyDomainPasswordChange.Management
                 Email = principal.EmailAddress,
                 Description = principal.Description,
                 LastPasswordSet = principal.LastPasswordSet.GetValueOrDefault(),
-                Enabled = principal.Enabled.GetValueOrDefault()
+                Enabled = principal.Enabled.GetValueOrDefault(),
+                PasswordNeverExpires = principal.PasswordNeverExpires
             };
             if (loadGroups)
             {

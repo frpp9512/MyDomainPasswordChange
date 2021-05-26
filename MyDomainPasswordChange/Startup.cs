@@ -11,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MyDomainPasswordChange.Data.AspNetExtensions;
+using MyDomainPasswordChange.Data.Interfaces;
 using MyDomainPasswordChange.Management;
 using MyDomainPasswordChange.Managers;
 

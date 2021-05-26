@@ -9,6 +9,8 @@ namespace MyDomainPasswordChange.Management
     {
         bool AuthenticateUser(string accountName, string password);
         void ChangeUserPassword(string accountName, string password, string newPassword);
+        void SetUserPassword(string accountName, string newPassword);
+        void ResetPassword(string accountName, string tempPassword);
         UserInfo GetUserInfo(string accountName);
         Task<UserInfo> GetUserInfoAsync(string accountName);
         bool UserExists(string accountName);

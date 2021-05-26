@@ -18,10 +18,17 @@ namespace MyDomainPasswordChange.Data.Contexts
         /// </summary>
         public DbSet<PasswordHistoryEntry> HistoryEntries { get; set; }
 
+        /// <summary>
+        /// The IP address blocked for attempting offense the service.
+        /// </summary>
+        public DbSet<BlacklistedIpAddress> BlacklistedIps { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<PasswordHistoryEntry>().HasKey(p => p.Id);
-
+ 
+            modelBuilder.Entity<BlacklistedIpAddress>().HasKey(b => b.Id);
+            
             base.OnModelCreating(modelBuilder);
         }
     }

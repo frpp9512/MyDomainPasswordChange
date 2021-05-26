@@ -9,8 +9,8 @@ namespace MyDomainPasswordChange
 {
     public interface IAlertCountingManagement
     {
-        public void CountChallengeFail();
-        public void CountPasswordFail(string accountName);
-        public void CountAuthFail();
+        public Task CountChallengeFailAsync();
+        public Task CountPasswordFailAsync(string accountName);
+        public Task CountAuthFailAsync();
     }
 }

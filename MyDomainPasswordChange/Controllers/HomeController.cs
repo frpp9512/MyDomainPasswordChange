@@ -52,14 +52,14 @@ namespace MyDomainPasswordChange.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel viewModel)
+        public async Task<IActionResult> ChangePasswordAsync(ChangePasswordViewModel viewModel)
         {
             if (ModelState.IsValid)
             {
                 if (!_challenger.EvaluateChallengeAnswer(viewModel.ChallengeId, viewModel.ChallengeAnswer))
                 {
                     ModelState.AddModelError("Challenge failed", "El debe responder correctamente el desafío.");
-                    _countingManagement.CountChallengeFail();
+                    await _countingManagement.CountChallengeFailAsync();
                     viewModel.ChallengeAnswer = "";
                     return View("Index", viewModel);
                 }
@@ -97,7 +97,7 @@ namespace MyDomainPasswordChange.Controllers
                 catch (BadPasswordException bpex)
                 {
                     ModelState.AddModelError("BadPassword", bpex.Message);
-                    _countingManagement.CountPasswordFail(viewModel.Username);
+                    await _countingManagement.CountPasswordFailAsync(viewModel.Username);
                     return View("Index");
                 }
                 catch (UserNotFoundException unfex)

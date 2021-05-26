@@ -8,9 +8,58 @@
 
 <main role="main">
     <div class="container">
+        @if ((TempData["UnauthorizedAction"] as bool?) == true)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <strong><i class="fas fa-hand-paper"></i> NO AUTORIZADO</strong> No cuenta con los privilegios suficientes para realizar esta acción.
+                <button type="button" class="close" data-dismiss="alert" aria-label="cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <strong><i class="fas fa-heart-broken"></i> HA OCURRIDO UN ERROR</strong> @TempData["Error"]
+                <button type="button" class="close" data-dismiss="alert" aria-label="cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        }
+        @if (TempData["PasswordResetted"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <strong><i class="fas fa-undo-alt"></i> CONTRASEÑA RESETEADA</strong> Se reseteado satisfactoriamente la contraseña al usuario <b>@TempData["PasswordResetted"]</b>.
+                <hr />
+                <small>Recuerde que esta contraseña es temporal y se le solicitará cambiarla la próxima vez que inicie sesión.</small>
+                <button type="button" class="close" data-dismiss="alert" aria-label="cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        }
+        @if (TempData["UserUnknown"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <strong><i class="fas fa-user-alt-slash"></i> USUARIO DESCONOCIDO</strong> El usuario <b>@TempData["UserUnknown"]</b> no existe en el dominio.
+                <button type="button" class="close" data-dismiss="alert" aria-label="cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        }
+        @if (TempData["PasswordSetted"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <strong><i class="fas fa-asterisk"></i> CONTRASEÑA ESTABLECIDA</strong> Se establecido satisfactoriamente la contraseña al usuario <b>@TempData["PasswordResetted"]</b>.
+                <button type="button" class="close" data-dismiss="alert" aria-label="cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        }
+
         <h1>Administración</h1>
         <hr />
         <h5>Control de los usuarios del dominio</h5>
+
         <div class="mt-3 mb-4">
             <span>
                 <i class="fas fa-users"></i> Total de usuarios: <b>@Model.TotalUsers</b>
@@ -27,9 +76,21 @@
                     <i class="fas fa-exclamation-circle"></i> Con contraseña expirada: <b>@Model.GetExpiredPasswordUserCount(config.GetValue<int>("passwordExpirationDays"))</b>
                 </span>
             }
+            @if (Model.GetNeverExpiresPasswordUserCount() > 0)
+            {
+                <span class="text-muted ml-2">
+                    <i class="fas fa-infinity"></i> Nunca expiran: <b>@Model.GetNeverExpiresPasswordUserCount()</b>
+                </span>
+            }
+            @if (Model.GetPendingToSetPasswordUserCount() > 0)
+            {
+                <span class="text-info ml-2">
+                    <i class="fas fa-clock"></i> Pendientes a establecer: <b>@Model.GetPendingToSetPasswordUserCount()</b>
+                </span>
+            }
         </div>
 
-        <table class="table" style="font-size: 12px;">
+        <table class="table table-responsive" style="font-size: 12px;">
             <thead class="font-weight-bold">
                 <tr>
                     <td>
@@ -50,7 +111,7 @@
                 @foreach (var dependency in Model.Groups)
                 {
                     <tr>
-                        <td colspan="4" class="justify-content-center">
+                        <td colspan="5" class="justify-content-center">
                             <h5>@dependency.Description</h5>
                             <span>
                                 <i class="fas fa-users"></i> @dependency.Users.Count
@@ -67,6 +128,18 @@
                                     <i class="fas fa-exclamation-circle"></i> @dependency.GetExpiredPasswordUserCount(config.GetValue<int>("passwordExpirationDays"))
                                 </span>
                             }
+                            @if (dependency.GetNeverExpiresPasswordUserCount() > 0)
+                            {
+                                <span class="text-muted ml-2">
+                                    <i class="fas fa-infinity"></i> @dependency.GetNeverExpiresPasswordUserCount()
+                                </span>
+                            }
+                            @if (dependency.GetPendingToSetPasswordUserCount() > 0)
+                            {
+                                <span class="text-info ml-2">
+                                    <i class="fas fa-clock"></i> @dependency.GetPendingToSetPasswordUserCount()
+                                </span>
+                            }
                         </td>
                     </tr>
                     @foreach (var user in dependency.Users.OrderBy(u => u.LastPasswordSet))
@@ -75,12 +148,12 @@
                             <td>@user.DisplayName</td>
                             <td>@user.AccountName</td>
                             <td>@user.Description</td>
-                            <td>
-                                <partial name="_PasswordExpirationDateLabel" model="user.LastPasswordSet" />
+                            <td class="text-right">
+                                <partial name="_PasswordExpirationDateLabel" model="user" />
                             </td>
                             <td>
-                                <a asp-action="ResetUserPassword" asp-controller="Management" asp-route-accountName="@user.AccountName"><i class="btn btn-success fas fa-undo-alt"></i></a>
-                                <a asp-action="SetUserPassword" asp-controller="Management" asp-route-accountName="@user.AccountName"><i class="btn btn-warning fas fa-asterisk"></i></a>
+                                <a asp-action="ResetUserPassword" asp-controller="Management" asp-route-accountName="@user.AccountName"><i class="btn btn-info fas fa-undo-alt"></i></a>
+                                <a asp-action="SetUserPassword" asp-controller="Management" asp-route-accountName="@user.AccountName"><i class="btn btn-success fas fa-asterisk"></i></a>
                             </td>
                         </tr>
                     }

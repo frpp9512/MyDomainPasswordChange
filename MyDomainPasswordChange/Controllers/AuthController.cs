@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 
 namespace MyDomainPasswordChange.Controllers
 {
+    [ServiceFilter(typeof(BlacklistFilter))]
     public class AuthController : Controller
     {
         private readonly ILogger<AuthController> _logger;

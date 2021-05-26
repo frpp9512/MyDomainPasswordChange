@@ -16,5 +16,11 @@ namespace MyDomainPasswordChange.Models
 
         public int GetCloseToExpirePasswordUserCount(int passwordExpirationDays)
             => Groups.Sum(g => g.GetCloseToExpirePasswordUserCount(passwordExpirationDays));
+
+        public int GetNeverExpiresPasswordUserCount()
+            => Groups.Sum(g => g.GetNeverExpiresPasswordUserCount());
+
+        public int GetPendingToSetPasswordUserCount()
+            => Groups.Sum(g => g.GetPendingToSetPasswordUserCount());
     }
 }

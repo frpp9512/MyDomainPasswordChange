@@ -37,6 +37,11 @@ namespace MyDomainPasswordChange.Management
         public DateTime LastPasswordSet { get; set; }
 
         /// <summary>
+        /// Defines if the user doesn't need to change the password periodically.
+        /// </summary>
+        public bool PasswordNeverExpires { get; set; }
+
+        /// <summary>
         /// <see langword="true"/> if the user is enabled in the Active Directory.
         /// </summary>
         public bool Enabled { get; internal set; }

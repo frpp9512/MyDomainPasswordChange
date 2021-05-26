@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using MyDomainPasswordChange.Data.Interfaces;
 using MyDomainPasswordChange.Management;
 using System;
+using System.Threading.Tasks;
 
 namespace MyDomainPasswordChange
 {
@@ -26,13 +28,13 @@ namespace MyDomainPasswordChange
             _blacklist = blacklist;
         }
 
-        public void CountChallengeFail()
+        public async Task CountChallengeFailAsync()
         {
-            CountForChallengeAlert();
-            CountForChallengeOffense();
+            await CountForChallengeAlertAsync();
+            await CountForChallengeOffenseAsync();
         }
 
-        private void CountForChallengeAlert()
+        private async Task CountForChallengeAlertAsync()
         {
             var remoteIp = _contextAccessor.HttpContext.Connection.RemoteIpAddress.ToString();
             var counterAlertKey = $"challenge-alert-{remoteIp}";
@@ -53,11 +55,11 @@ namespace MyDomainPasswordChange
             else
             {
                 _counterManager.AddCounter(counterAlertKey, "");
-                CountChallengeFail();
+                await CountChallengeFailAsync();
             }
         }
 
-        private void CountForChallengeOffense()
+        private async Task CountForChallengeOffenseAsync()
         {
             var remoteIp = _contextAccessor.HttpContext.Connection.RemoteIpAddress.ToString();
             var counterAlertKey = $"challenge-offense-{remoteIp}";
@@ -67,7 +69,7 @@ namespace MyDomainPasswordChange
                 {
                     _counterManager.SetCounterAlarm(counterAlertKey,
                                                     GetBadChallengeTriesOffense(),
-                                                    async (key, tries) => { _blacklist.AddIpAddressToBlacklist(remoteIp, "challenge"); await _notificator.SendBlacklistAlertAsync("challenge"); });
+                                                    async (key, tries) => { await _blacklist.AddIpAddressToBlacklistAsync(remoteIp, "challenge"); await _notificator.SendBlacklistAlertAsync("challenge"); });
                 }
                 if ((DateTime.Now - _counterManager.GetCounterLastCount(counterAlertKey)).TotalMinutes > _alarmRefresh)
                 {
@@ -78,17 +80,17 @@ namespace MyDomainPasswordChange
             else
             {
                 _counterManager.AddCounter(counterAlertKey, "");
-                CountChallengeFail();
+                await CountChallengeFailAsync();
             }
         }
 
-        public void CountPasswordFail(string accountName)
+        public async Task CountPasswordFailAsync(string accountName)
         {
-            CountForPasswordAlert(accountName);
-            CountForPasswordOffense(accountName);
+            await CountForPasswordAlert(accountName);
+            await CountForPasswordOffense(accountName);
         }
 
-        private void CountForPasswordAlert(string accountName)
+        private async Task CountForPasswordAlert(string accountName)
         {
             var remoteIp = _contextAccessor.HttpContext.Connection.RemoteIpAddress.ToString();
             var counterAlertKey = $"password-alert-{accountName}-{remoteIp}";
@@ -109,11 +111,11 @@ namespace MyDomainPasswordChange
             else
             {
                 _counterManager.AddCounter(counterAlertKey, "");
-                CountChallengeFail();
+                await CountChallengeFailAsync();
             }
         }
 
-        private void CountForPasswordOffense(string accountName)
+        private async Task CountForPasswordOffense(string accountName)
         {
             var remoteIp = _contextAccessor.HttpContext.Connection.RemoteIpAddress.ToString();
             var counterAlertKey = $"password-offense-{accountName}-{remoteIp}";
@@ -123,7 +125,7 @@ namespace MyDomainPasswordChange
                 {
                     _counterManager.SetCounterAlarm(counterAlertKey,
                                                     GetBadPasswordTriesOffense(),
-                                                    async (key, tries) => { _blacklist.AddIpAddressToBlacklist(remoteIp, "password"); await _notificator.SendBlacklistAlertAsync("password"); });
+                                                    async (key, tries) => { await _blacklist.AddIpAddressToBlacklistAsync(remoteIp, "password"); await _notificator.SendBlacklistAlertAsync("password"); });
                 }
                 if ((DateTime.Now - _counterManager.GetCounterLastCount(counterAlertKey)).TotalMinutes > _alarmRefresh)
                 {
@@ -134,7 +136,7 @@ namespace MyDomainPasswordChange
             else
             {
                 _counterManager.AddCounter(counterAlertKey, "");
-                CountChallengeFail();
+                await CountChallengeFailAsync();
             }
         }
 
@@ -146,7 +148,7 @@ namespace MyDomainPasswordChange
                 
         private uint GetBadChallengeTriesOffense() => _configuration.GetValue<uint>("badChallengeTriesOffense");
 
-        public void CountAuthFail()
+        public async Task CountAuthFailAsync()
         {
             var remoteIp = _contextAccessor.HttpContext.Connection.RemoteIpAddress.ToString();
             var counterAlertKey = $"challenge-offense-{remoteIp}";
@@ -165,7 +167,7 @@ namespace MyDomainPasswordChange
             else
             {
                 _counterManager.AddCounter(counterAlertKey, "");
-                CountChallengeFail();
+                await CountChallengeFailAsync();
             }
         }
     }

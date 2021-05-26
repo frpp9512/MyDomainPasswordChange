@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using MyDomainPasswordChange.Data.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,12 +19,12 @@ namespace MyDomainPasswordChange
             _blacklist = blacklist;
         }
 
-        public override void OnResultExecuting(ResultExecutingContext context)
+        public async override void OnResultExecuting(ResultExecutingContext context)
         {
             var ipAddress = context.HttpContext.Connection.RemoteIpAddress.ToString();
-            if (_blacklist.IsIpAddressBlacklisted(ipAddress))
+            if (await _blacklist.IsIpAddressBlacklistedAsync(ipAddress))
             {
-                context.Result = new StatusCodeResult((int)StatusCodes.Status403Forbidden);
+                context.Result = new StatusCodeResult(StatusCodes.Status403Forbidden);
             }
             base.OnResultExecuting(context);
         }
