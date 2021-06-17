@@ -124,17 +124,27 @@ namespace MyDomainPasswordChange
             var dateTime = DateTime.Now;
             template = template.Replace("{time}", dateTime.ToShortTimeString());
             template = template.Replace("{date}", dateTime.ToShortDateString());
-            switch (reason)
+            template = template.Replace("{blacklist_reason}", reason switch
             {
-                case "challenge":
-                    template = template.Replace("{blacklist_reason}", "se intentó enviar el fomulario respondiendo mal del desafío en múltiples ocasiones");
-                    break;
-                case "password":
-                    template = template.Replace("{blacklist_reason}", "falló en escribir la contraseña de usuario en múltiples ocasiones");
-                    break;
-                default:
-                    break;
-            }
+                "challenge" => "se intentó enviar el fomulario respondiendo mal del desafío en múltiples ocasiones",
+                "password" => "falló en escribir la contraseña de usuario en múltiples ocasiones",
+                "mgmt_login" => "falló en acceder a la administración en múltiples ocasiones",
+                _ => ""
+            });
+            //switch (reason)
+            //{
+            //    case "challenge":
+            //        template = template.Replace("{blacklist_reason}", "se intentó enviar el fomulario respondiendo mal del desafío en múltiples ocasiones");
+            //        break;
+            //    case "password":
+            //        template = template.Replace("{blacklist_reason}", "falló en escribir la contraseña de usuario en múltiples ocasiones");
+            //        break;
+            //    case "mgmt_login":
+            //        template = template.Replace("{blacklist_reason}", "falló en acceder a la administración en múltiples ocasiones");
+            //        break;
+            //    default:
+            //        break;
+            //}
             return template;
         }
 
@@ -155,6 +165,47 @@ namespace MyDomainPasswordChange
             template = template.Replace("{expirationDays}", (expirationDate - dateTime).Days.ToString());
             template = template.Replace("{expirationDate}", expirationDate.ToShortDateString());
             template = template.Replace("{accountName}", userInfo.AccountName);
+            return template;
+        }
+
+        public async Task SendManagementLoginFailAlertAsync() => await _mailService.SendMailAsync(new MailRequest
+        {
+            Body = GetManagementLoginFailedAlertTemplate(),
+            MailTo = AdminEmail,
+            Subject = "Intento de acceso a la administración - Cambio de contraseña",
+            Important = true
+        });
+
+        private string GetManagementLoginFailedAlertTemplate()
+        {
+            var templatePath = Path.Combine(_webHostEnvironment.WebRootPath, $"templates{Path.DirectorySeparatorChar}mail_admin_login_failed_alert_template.html");
+            var template = File.ReadAllText(templatePath);
+            template = template.Replace("{requestIp}", HttpContext.Connection.RemoteIpAddress.ToString());
+            var dateTime = DateTime.Now;
+            template = template.Replace("{time}", dateTime.ToShortTimeString());
+            template = template.Replace("{date}", dateTime.ToShortDateString());
+            return template;
+        }
+
+        public async Task SendManagementLogin(UserInfo userInfo)
+        {
+            await _mailService.SendMailAsync(new MailRequest 
+            {
+                Body = GetManagementLoginTemplate(userInfo),
+                MailTo = AdminEmail,
+                Subject = "Acceso a la administración - Cambio de contraseña"
+            });
+        }
+
+        private string GetManagementLoginTemplate(UserInfo userInfo)
+        {
+            var templatePath = Path.Combine(_webHostEnvironment.WebRootPath, $"templates{Path.DirectorySeparatorChar}mail_admin_login_template.html");
+            var template = File.ReadAllText(templatePath);
+            template = template.Replace("{accountName}", $"{userInfo.DisplayName} ({userInfo.Email})");
+            template = template.Replace("{requestIp}", HttpContext.Connection.RemoteIpAddress.ToString());
+            var dateTime = DateTime.Now;
+            template = template.Replace("{time}", dateTime.ToShortTimeString());
+            template = template.Replace("{date}", dateTime.ToShortDateString());
             return template;
         }
     }

@@ -85,6 +85,7 @@ namespace MyDomainPasswordChange.Controllers
                     await _historyManager.RegisterPasswordAsync(viewModel.Username, viewModel.NewPassword);
                     var userInfo = _passwordManagement.GetUserInfo(viewModel.Username);
                     await _mailNotificator.SendChangePasswordNotificationAsync(viewModel.Username);
+                    TempData["PasswordChanged"] = true;
                     return RedirectToAction("ChangePasswordSuccess", new UserViewModel
                     {
                         AccountName = userInfo.AccountName,
@@ -115,7 +116,7 @@ namespace MyDomainPasswordChange.Controllers
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult ChangePasswordSuccess(UserViewModel viewModel) => View(viewModel);
+        public IActionResult ChangePasswordSuccess(UserViewModel viewModel) => TempData["PasswordChanged"] != null && (bool)TempData["PasswordChanged"] ? View(viewModel) : RedirectToAction("Index");
 
         [HttpGet]
         public async Task<FileStreamResult> UserPicture(string accountName)

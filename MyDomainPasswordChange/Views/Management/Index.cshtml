@@ -90,7 +90,7 @@
             }
         </div>
 
-        <table class="table table-responsive" style="font-size: 12px;">
+        <table class="table table-responsive w-100" style="font-size: 12px;">
             <thead class="font-weight-bold">
                 <tr>
                     <td>
@@ -111,7 +111,7 @@
                 @foreach (var dependency in Model.Groups)
                 {
                     <tr>
-                        <td colspan="5" class="justify-content-center">
+                        <td colspan="4" class="justify-content-center">
                             <h5>@dependency.Description</h5>
                             <span>
                                 <i class="fas fa-users"></i> @dependency.Users.Count
@@ -141,10 +141,18 @@
                                 </span>
                             }
                         </td>
+                        <td class="text-right">
+                            @if (Model.Groups.Count > 1)
+                            {
+                                <a class="btn btn-primary collapser" id="collapser-@dependency.Name" data-toggle="collapse" href="#@dependency.Name" role="button" aria-expanded="false" aria-controls="@dependency.Name">
+                                    <span class="fas fa-list"></span>
+                                </a>
+                            }
+                        </td>
                     </tr>
                     @foreach (var user in dependency.Users.OrderBy(u => u.LastPasswordSet))
                     {
-                        <tr>
+                        <tr class="@(Model.Groups.Count > 1 ? "collapse" : "")" id="@dependency.Name">
                             <td>@user.DisplayName</td>
                             <td>@user.AccountName</td>
                             <td>@user.Description</td>

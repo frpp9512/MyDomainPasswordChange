@@ -55,7 +55,7 @@ namespace MyDomainPasswordChange
             else
             {
                 _counterManager.AddCounter(counterAlertKey, "");
-                await CountChallengeFailAsync();
+                await CountForChallengeAlertAsync();
             }
         }
 
@@ -111,7 +111,7 @@ namespace MyDomainPasswordChange
             else
             {
                 _counterManager.AddCounter(counterAlertKey, "");
-                await CountChallengeFailAsync();
+                await CountForPasswordAlert(accountName);
             }
         }
 
@@ -125,7 +125,11 @@ namespace MyDomainPasswordChange
                 {
                     _counterManager.SetCounterAlarm(counterAlertKey,
                                                     GetBadPasswordTriesOffense(),
-                                                    async (key, tries) => { await _blacklist.AddIpAddressToBlacklistAsync(remoteIp, "password"); await _notificator.SendBlacklistAlertAsync("password"); });
+                                                    async (key, tries) => 
+                                                    { 
+                                                        await _blacklist.AddIpAddressToBlacklistAsync(remoteIp, "password"); 
+                                                        await _notificator.SendBlacklistAlertAsync("password"); 
+                                                    });
                 }
                 if ((DateTime.Now - _counterManager.GetCounterLastCount(counterAlertKey)).TotalMinutes > _alarmRefresh)
                 {
@@ -148,15 +152,21 @@ namespace MyDomainPasswordChange
                 
         private uint GetBadChallengeTriesOffense() => _configuration.GetValue<uint>("badChallengeTriesOffense");
 
-        public async Task CountAuthFailAsync()
+        public async Task CountManagementAuthFailAsync()
+        {
+            await CountForLoginFailAlertAsync();
+            await CountForLoginOffenseAsync();
+        }
+
+        private async Task CountForLoginFailAlertAsync()
         {
             var remoteIp = _contextAccessor.HttpContext.Connection.RemoteIpAddress.ToString();
-            var counterAlertKey = $"challenge-offense-{remoteIp}";
+            var counterAlertKey = $"auth-failed-{remoteIp}";
             if (_counterManager.ExistCounter(counterAlertKey))
             {
                 if (!_counterManager.HasAlarm(counterAlertKey))
                 {
-                    _counterManager.SetCounterAlarm(counterAlertKey, 5, (key, tries) => { });
+                    _counterManager.SetCounterAlarm(counterAlertKey, 3, (key, tries) => _notificator.SendManagementLoginFailAlertAsync());
                 }
                 if ((DateTime.Now - _counterManager.GetCounterLastCount(counterAlertKey)).TotalMinutes > _alarmRefresh)
                 {
@@ -167,7 +177,34 @@ namespace MyDomainPasswordChange
             else
             {
                 _counterManager.AddCounter(counterAlertKey, "");
-                await CountChallengeFailAsync();
+                await CountForLoginFailAlertAsync();
+            }
+        }
+
+        private async Task CountForLoginOffenseAsync()
+        {
+            var remoteIp = _contextAccessor.HttpContext.Connection.RemoteIpAddress.ToString();
+            var counterAlertKey = $"auth-offense-{remoteIp}";
+            if (_counterManager.ExistCounter(counterAlertKey))
+            {
+                if (!_counterManager.HasAlarm(counterAlertKey))
+                {
+                    _counterManager.SetCounterAlarm(counterAlertKey, 5, async (key, tries) => 
+                    {
+                        await _blacklist.AddIpAddressToBlacklistAsync(remoteIp, "password");
+                        await _notificator.SendBlacklistAlertAsync("mgmt_login");
+                    });
+                }
+                if ((DateTime.Now - _counterManager.GetCounterLastCount(counterAlertKey)).TotalMinutes > _alarmRefresh)
+                {
+                    _counterManager.ResetCounter(counterAlertKey);
+                }
+                _counterManager.Count(counterAlertKey);
+            }
+            else
+            {
+                _counterManager.AddCounter(counterAlertKey, "");
+                await CountForLoginOffenseAsync();
             }
         }
     }

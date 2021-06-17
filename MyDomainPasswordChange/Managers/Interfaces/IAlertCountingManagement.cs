@@ -11,6 +11,6 @@ namespace MyDomainPasswordChange
     {
         public Task CountChallengeFailAsync();
         public Task CountPasswordFailAsync(string accountName);
-        public Task CountAuthFailAsync();
+        public Task CountManagementAuthFailAsync();
     }
 }

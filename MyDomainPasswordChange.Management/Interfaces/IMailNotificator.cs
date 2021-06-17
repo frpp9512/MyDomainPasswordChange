@@ -13,5 +13,7 @@ namespace MyDomainPasswordChange.Management
         Task SendChallengeAlertAsync();
         Task SendBlacklistAlertAsync(string reason);
         Task SendExpirationNotificationAsync(UserInfo userInfo, DateTime expirationDate);
+        Task SendManagementLoginFailAlertAsync();
+        Task SendManagementLogin(UserInfo userInfo);
     }
 }

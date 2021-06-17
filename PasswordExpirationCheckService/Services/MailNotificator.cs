@@ -50,5 +50,15 @@ namespace PasswordExpirationCheckService
         public Task SendChangePasswordAlertAsync(string accountName) => throw new NotImplementedException();
         public Task SendChallengeAlertAsync() => throw new NotImplementedException();
         public Task SendBlacklistAlertAsync(string reason) => throw new NotImplementedException();
+
+        public Task SendManagementLoginFailAlertAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task SendManagementLogin(UserInfo userInfo)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

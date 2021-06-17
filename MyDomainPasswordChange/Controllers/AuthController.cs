@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using MyDomainPasswordChange.Management;
@@ -18,16 +19,19 @@ namespace MyDomainPasswordChange.Controllers
         private readonly IDomainPasswordManagement _passwordManagement;
         private readonly IDependenciesGroupsManagement _groupsManagement;
         private readonly IAlertCountingManagement _alertCountingManagement;
+        private readonly IMailNotificator _notificator;
 
         public AuthController(ILogger<AuthController> logger,
                               IDomainPasswordManagement passwordManagement,
                               IDependenciesGroupsManagement groupsManagement,
-                              IAlertCountingManagement alertCountingManagement)
+                              IAlertCountingManagement alertCountingManagement,
+                              IMailNotificator notificator)
         {
             _logger = logger;
             _passwordManagement = passwordManagement;
             _groupsManagement = groupsManagement;
             _alertCountingManagement = alertCountingManagement;
+            _notificator = notificator;
         }
 
         [HttpGet]
@@ -45,6 +49,8 @@ namespace MyDomainPasswordChange.Controllers
                 if (_passwordManagement.AuthenticateUser(viewModel.Username, viewModel.Password))
                 {
                     var user = _passwordManagement.GetUserInfo(viewModel.Username);
+
+                    await _notificator.SendManagementLogin(user);
 
                     if (user.Enabled && 
                         user.IsDomainAdmin && 
@@ -81,9 +87,11 @@ namespace MyDomainPasswordChange.Controllers
                 }
             }
             ModelState.AddModelError("BadLogin", "Error de autenticación.");
+            await _alertCountingManagement.CountManagementAuthFailAsync();
             return View(viewModel);
         }
 
+        [Authorize]
         public async Task<IActionResult> Logout(string returnUrl = "/")
         {
             if (User.Identity.IsAuthenticated)
