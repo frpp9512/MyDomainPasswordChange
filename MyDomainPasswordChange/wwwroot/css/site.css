@@ -186,6 +186,7 @@ article > p {
         display: flex;
         flex-direction: row;
         justify-content: space-evenly;
+        align-items: center;
     }
 
         .blacklist-header .header-options div {

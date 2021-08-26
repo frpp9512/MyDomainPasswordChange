@@ -82,6 +82,7 @@ namespace MyDomainPasswordChange.Controllers
                     var model = viewModel.GetModel();
                     model.AddedInBlacklist = DateTime.Now;
                     await _blacklist.AddIpAddressAsync(model);
+                    TempData["BlacklistCreated"] = model.IpAddress;
                     return RedirectToAction("Index");
                 }
                 else
