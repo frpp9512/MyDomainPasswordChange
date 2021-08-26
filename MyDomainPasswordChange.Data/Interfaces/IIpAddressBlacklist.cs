@@ -8,9 +8,13 @@ namespace MyDomainPasswordChange.Data.Interfaces
 {
     public interface IIpAddressBlacklist
     {
-        Task<List<BlacklistedIpAddress>> GetBlacklistedIpAddressesAsync();
-        Task AddIpAddressToBlacklistAsync(string ipAddress, string reason);
-        Task RemoveIpAddressFromBlacklistAsync(string ipAddress);
-        Task<bool> IsIpAddressBlacklistedAsync(string ipAddress);
+        Task<IEnumerable<BlacklistedIpAddress>> GetIpAddressesAsync();
+        Task AddIpAddressAsync(string ipAddress, string reason);
+        Task AddIpAddressAsync(BlacklistedIpAddress blacklistedIp);
+        Task RemoveIpAddressAsync(string ipAddress);
+        Task<bool> IsBlacklistedAsync(string ipAddress);
+        Task<BlacklistedIpAddress> GetBlacklistedIpAddressAsync(Guid id);
+        Task<bool> ExistsBlacklistedAddressAsync(Guid id);
+        Task RemoveBlacklistedAddressAsync(BlacklistedIpAddress blacklistedIp);
     }
 }

@@ -1,0 +1,17 @@
+﻿@model string
+@{
+    ViewData["Title"] = "Acceso denegado por lista negra";
+}
+
+<div class="outer">
+    <div class="middle">
+        <div class="d-block col-11 col-md-7 col-lg-6 col-xl-4 p-2 p-md-3 p-lg-5 chpasswordbox fade-in">
+            <h1 class="text-danger"><span class="fa fa-ban"></span> Acceso denegado</h1>
+            <h4 class="mt-4">Se encuentra en lista negra.</h4>
+
+            <p>Su dirección IP (@Model) se encuentra en la lista negra del servicio.</p>
+            <p>Contacte al administrador del sistema para corregir este hecho si considera que es un error.</p>
+            <small class="text-muted">Frank Raúl Pérez Pérez - Administrador de redes - fperez@ingeco.cu</small>
+        </div>
+    </div>
+</div>

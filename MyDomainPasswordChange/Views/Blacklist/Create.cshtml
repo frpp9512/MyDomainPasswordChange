@@ -1,0 +1,45 @@
+﻿@model MyDomainPasswordChange.Models.BlacklistedIpViewModel
+
+@{
+    ViewData["Title"] = "Registrar en lista negra";
+}
+
+<main>
+    <div class="container">
+        <h1>Agregar a lista negra</h1>
+
+        <h4>Rellene el formulario para registrar dirección en la lista negra.</h4>
+        <hr />
+        <div class="row">
+            <div class="col-md-4">
+                <form asp-action="Create">
+                    <div asp-validation-summary="All" class="text-danger"></div>
+                    <div class="form-group">
+                        <label asp-for="IpAddress" class="control-label"></label>
+                        <input asp-for="IpAddress" class="form-control" />
+                        <span asp-validation-for="IpAddress" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Reason" class="control-label"></label>
+                        <input asp-for="Reason" class="form-control" />
+                        <span asp-validation-for="Reason" class="text-danger"></span>
+                    </div>
+                    <div class="form-footer">
+                        <div>
+                            <a asp-action="Index"><span class="fa fa-arrow-circle-left"></span> Regresar al listado</a>
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                <span class="fa fa-plus-square"></span> Registrar
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

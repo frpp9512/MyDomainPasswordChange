@@ -22,11 +22,11 @@ namespace MyDomainPasswordChange
         public async override void OnResultExecuting(ResultExecutingContext context)
         {
             var ipAddress = context.HttpContext.Connection.RemoteIpAddress.ToString();
-            if (await _blacklist.IsIpAddressBlacklistedAsync(ipAddress))
+            if (await _blacklist.IsBlacklistedAsync(ipAddress))
             {
-                context.Result = new StatusCodeResult(StatusCodes.Status403Forbidden);
+                context.Result = new RedirectToActionResult("Blacklisted", "Blacklist", new { address = ipAddress });
             }
-            base.OnResultExecuting(context);
+            //base.OnResultExecuting(context);
         }
     }
 }

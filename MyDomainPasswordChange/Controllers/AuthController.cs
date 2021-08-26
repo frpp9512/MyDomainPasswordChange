@@ -100,5 +100,13 @@ namespace MyDomainPasswordChange.Controllers
             }
             return Redirect(returnUrl);
         }
+
+        [HttpGet]
+        [AllowAnonymous]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
     }
 }

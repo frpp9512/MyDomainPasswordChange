@@ -1,0 +1,177 @@
+﻿@model MyDomainPasswordChange.Models.BlacklistIndexViewModel
+
+@{
+    ViewData["Title"] = "Lista negra";
+}
+
+<main role="main">
+    <div class="container">
+        <div id="alert-container">
+
+        </div>
+
+        <div class="blacklist-header">
+            <h1><span class="fa fa-skull"></span> Lista negra</h1>
+
+            <div class="header-options">
+                <div>
+                    <a class="btn btn-info" asp-action="Create"><span class="fa fa-plus-square"></span> Agregar nuevo</a>
+                </div>
+                <div>
+                    <input type="search" placeholder="Búsqueda rápida" id="searchBox" class="form-control" />
+                </div>
+            </div>
+        </div>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>
+                        Agregado
+                    </th>
+                    <th>
+                        Dirección IP
+                    </th>
+                    <th>
+                        Motivo
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.BlacklistedIpAddresses)
+                {
+                    <tr id="@item.Id.ToString()">
+                        <td>
+                            @Html.DisplayFor(modelItem => item.AddedInBlacklist)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.IpAddress)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Reason)
+                        </td>
+                        <td>
+                            <button class="btn btn-danger" onclick="RemoveFromBlacklist('@item.Id.ToString()')" title="Eliminar de la lista negra">
+                                <span class="fa fa-trash"></span>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteAddressModal" tabindex="-1" role="dialog" aria-labelledby="deleteAddressModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-delete-title"><span class="fa fa-trash"></span> Eliminar de la lista negra</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div id="modal-delete-content" class="modal-body">
+
+            </div>
+            <div class="modal-footer" id="modal-delete-footer">
+                <button type="button" id="modal-delete-btn-primary" class="btn btn-danger"><span class="fa fa-trash"></span> Eliminar</button>
+                <button type="button" id="model-delete-btn-secondary" class="btn btn-secondary" data-dismiss="modal"><span class="fa fa-slash"></span> Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts
+{
+    <script>
+        const searchBox = document.getElementById("searchBox");
+        searchBox.oninput = Search;
+
+        function Search() {
+            var searchText = searchBox.value.toLowerCase();
+
+            const rows = document.getElementsByTagName("tr");
+            for (let index = 1; index < rows.length; index++) {
+                const row = rows[index];
+                var values = [row.children[0].innerHTML.toLocaleLowerCase(), row.children[1].innerHTML.toLocaleLowerCase(), row.children[2].innerHTML.toLocaleLowerCase()];
+
+                if (values[0].includes(searchText) || values[1].includes(searchText) || values[2].includes(searchText)) {
+                    row.style.visibility = "visible";
+                } else {
+                    row.style.visibility = "collapse";
+                }
+            }
+        }
+
+        var userId;
+
+        function RemoveFromBlacklist(id) {
+            userId = id;
+            var row = document.getElementById(id);
+            var ip = row.children[1].innerHTML;
+            var modalContent = document.getElementById("modal-delete-content");
+            modalDeleteContentTemplate = "¿Está seguro que desea eliminar la dirección IP {ipaddress} de la lista negra?";
+            modalText = modalDeleteContentTemplate.replace("{ipaddress}", ip);
+            modalContent.innerHTML = modalText;
+            var btn = document.getElementById("modal-delete-btn-primary");
+            btn.onclick = SendDeleteAddressRequest;
+            ShowDeleteModalFooter();
+            $("#deleteAddressModal").modal();
+        }
+
+        function SendDeleteAddressRequest() {
+            HideDeleteModalFooter();
+            $.ajax({
+                url: "/blacklist/delete",
+                method: "DELETE",
+                data: {
+                    id: userId
+                },
+                success: function (response) {
+                    console.log(response);
+                    var row = document.getElementById(userId);
+                    row.remove();
+                    $("#deleteAddressModal").modal("hide");
+                    ShowAlert("Eliminar de lista negra", response, false);
+                    document.scrollingElement.scrollTo(0, 0);
+                },
+                error: function (response) {
+                    console.log(response);
+                    $("#deleteAddressModal").modal("hide");
+                    ShowAlert("Eliminar de lista negra", response, true);
+                }
+            });
+        }
+
+        function ShowDeleteModalFooter() {
+            SetDeleteModalFooterVisibility("flex");
+        }
+
+        function HideDeleteModalFooter() {
+            SetDeleteModalFooterVisibility("none");
+        }
+
+        function SetDeleteModalFooterVisibility(visibility) {
+            var modalFooter = document.getElementById("modal-delete-footer");
+            modalFooter.style.display = visibility;
+        }
+
+        var alertTemplate = "<div class='alert alert-{alert-type} alert-dismissible fade show' role='alert'>"
+            + "<div id = 'alert-content'>"
+            + "<strong>{title}</strong> {body}"
+            + "</div>"
+            + "<button type='button' class='close' data-dismiss='alert' aria-label='Close'>"
+            + "<span aria-hidden='true'>&times;</span>"
+            + "</button>"
+            + "</div>";
+
+        function ShowAlert(title, text, isError) {
+            var alertContainer = document.getElementById("alert-container");
+            alertBody = alertTemplate.replace("{title}", title).replace("{body}", text).replace("{alert-type}", isError ? "danger" : "info");
+            alertContainer.innerHTML = alertBody;
+        }
+    </script>
+}

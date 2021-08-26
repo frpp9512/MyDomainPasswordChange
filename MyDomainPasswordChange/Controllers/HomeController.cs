@@ -16,7 +16,7 @@ using MyDomainPasswordChange.Models;
 
 namespace MyDomainPasswordChange.Controllers
 {
-    [ServiceFilter(typeof(BlacklistFilter))]
+    [ServiceFilter(typeof(BlacklistFilter), IsReusable = true)]
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;

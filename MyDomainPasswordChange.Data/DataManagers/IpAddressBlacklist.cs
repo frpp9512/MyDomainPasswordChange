@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace MyDomainPasswordChange
@@ -19,9 +20,9 @@ namespace MyDomainPasswordChange
             _dataContext = dataContext;
         }
 
-        public async Task AddIpAddressToBlacklistAsync(string ipAddress, string reason)
+        public async Task AddIpAddressAsync(string ipAddress, string reason)
         {
-            if (await IsIpAddressBlacklistedAsync(ipAddress))
+            if (await IsBlacklistedAsync(ipAddress))
             {
                 var blacklisted = await _dataContext.BlacklistedIps.FirstOrDefaultAsync(b => b.IpAddress == ipAddress);
                 blacklisted.AddedInBlacklist = DateTime.Now;
@@ -40,18 +41,49 @@ namespace MyDomainPasswordChange
             await _dataContext.SaveChangesAsync();
         }
 
-        public async Task<List<BlacklistedIpAddress>> GetBlacklistedIpAddressesAsync() 
+        public async Task AddIpAddressAsync(BlacklistedIpAddress blacklistedIp)
+        {
+            if (await IsBlacklistedAsync(blacklistedIp.IpAddress))
+            {
+                var blacklisted = await _dataContext.BlacklistedIps.FirstOrDefaultAsync(b => b.IpAddress == blacklistedIp.IpAddress);
+                blacklisted.AddedInBlacklist = DateTime.Now;
+                blacklisted.Reason = blacklistedIp.Reason;
+                _dataContext.Update(blacklisted);
+            }
+            else
+            {
+                await _dataContext.BlacklistedIps.AddAsync(blacklistedIp);
+            }
+            await _dataContext.SaveChangesAsync();
+        }
+
+        public async Task<IEnumerable<BlacklistedIpAddress>> GetIpAddressesAsync()
             => await _dataContext.BlacklistedIps.ToListAsync();
 
-        public async Task<bool> IsIpAddressBlacklistedAsync(string ipAddress) 
+        public async Task<bool> IsBlacklistedAsync(string ipAddress)
             => await _dataContext.BlacklistedIps.AnyAsync(b => b.IpAddress == ipAddress) == true;
 
-        public async Task RemoveIpAddressFromBlacklistAsync(string ipAddress)
+        public async Task RemoveIpAddressAsync(string ipAddress)
         {
-            if (await IsIpAddressBlacklistedAsync(ipAddress))
+            if (await IsBlacklistedAsync(ipAddress))
             {
                 _dataContext.BlacklistedIps.Remove(_dataContext.BlacklistedIps.First(b => b.IpAddress == ipAddress));
             }
+            await _dataContext.SaveChangesAsync();
+        }
+
+        public async Task<BlacklistedIpAddress> GetBlacklistedIpAddressAsync(Guid id) 
+        {
+            var address = await _dataContext.BlacklistedIps.FirstOrDefaultAsync(b => b.Id == id);
+            return address;
+        }
+
+        public async Task<bool> ExistsBlacklistedAddressAsync(Guid id) 
+            => await _dataContext.BlacklistedIps.AnyAsync(b => b.Id == id);
+
+        public async Task RemoveBlacklistedAddressAsync(BlacklistedIpAddress blacklistedIp)
+        {
+            _dataContext.BlacklistedIps.Remove(blacklistedIp);
             await _dataContext.SaveChangesAsync();
         }
     }

@@ -68,7 +68,7 @@ body {
     color: #404040;
 }
 
-article>p {
+article > p {
     font-size: 18px;
 }
 
@@ -168,7 +168,47 @@ article>p {
     font-weight: bolder;
 }
 
-.password-preview > div[class="passtitle"] {
-    font-size: 14px;
-    font-weight:normal;
+    .password-preview > div[class="passtitle"] {
+        font-size: 14px;
+        font-weight: normal;
+    }
+
+.blacklist-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 5px;
+    padding-bottom: 10px;
+}
+
+    .blacklist-header .header-options {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-evenly;
+    }
+
+        .blacklist-header .header-options div {
+            margin-left: 15px;
+        }
+
+@media (max-width: 768px) {
+    .blacklist-header {
+        flex-direction: column;
+    }
+
+        .blacklist-header .header-options {
+            flex-direction: column;
+        }
+
+            .blacklist-header .header-options div {
+                margin-top: 15px;
+            }
+}
+
+.form-footer {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: baseline;
 }

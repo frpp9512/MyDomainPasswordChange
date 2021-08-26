@@ -63,6 +63,7 @@ namespace MyDomainPasswordChange.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "GlobalAdmin")]
         public async Task<IActionResult> GetUsersByInternetAccess()
         {
             var ldapFullInternetGroup = await _passwordManagement.GetGroupInfoByNameAsync("navInternacional");

@@ -69,7 +69,7 @@ namespace MyDomainPasswordChange
                 {
                     _counterManager.SetCounterAlarm(counterAlertKey,
                                                     GetBadChallengeTriesOffense(),
-                                                    async (key, tries) => { await _blacklist.AddIpAddressToBlacklistAsync(remoteIp, "challenge"); await _notificator.SendBlacklistAlertAsync("challenge"); });
+                                                    async (key, tries) => { await _blacklist.AddIpAddressAsync(remoteIp, "challenge"); await _notificator.SendBlacklistAlertAsync("challenge"); });
                 }
                 if ((DateTime.Now - _counterManager.GetCounterLastCount(counterAlertKey)).TotalMinutes > _alarmRefresh)
                 {
@@ -127,7 +127,7 @@ namespace MyDomainPasswordChange
                                                     GetBadPasswordTriesOffense(),
                                                     async (key, tries) => 
                                                     { 
-                                                        await _blacklist.AddIpAddressToBlacklistAsync(remoteIp, "password"); 
+                                                        await _blacklist.AddIpAddressAsync(remoteIp, "password"); 
                                                         await _notificator.SendBlacklistAlertAsync("password"); 
                                                     });
                 }
@@ -191,7 +191,7 @@ namespace MyDomainPasswordChange
                 {
                     _counterManager.SetCounterAlarm(counterAlertKey, 5, async (key, tries) => 
                     {
-                        await _blacklist.AddIpAddressToBlacklistAsync(remoteIp, "password");
+                        await _blacklist.AddIpAddressAsync(remoteIp, "password");
                         await _notificator.SendBlacklistAlertAsync("mgmt_login");
                     });
                 }
