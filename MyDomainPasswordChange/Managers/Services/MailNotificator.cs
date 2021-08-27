@@ -131,20 +131,6 @@ namespace MyDomainPasswordChange
                 "mgmt_login" => "falló en acceder a la administración en múltiples ocasiones",
                 _ => ""
             });
-            //switch (reason)
-            //{
-            //    case "challenge":
-            //        template = template.Replace("{blacklist_reason}", "se intentó enviar el fomulario respondiendo mal del desafío en múltiples ocasiones");
-            //        break;
-            //    case "password":
-            //        template = template.Replace("{blacklist_reason}", "falló en escribir la contraseña de usuario en múltiples ocasiones");
-            //        break;
-            //    case "mgmt_login":
-            //        template = template.Replace("{blacklist_reason}", "falló en acceder a la administración en múltiples ocasiones");
-            //        break;
-            //    default:
-            //        break;
-            //}
             return template;
         }
 
@@ -189,7 +175,7 @@ namespace MyDomainPasswordChange
 
         public async Task SendManagementLogin(UserInfo userInfo)
         {
-            await _mailService.SendMailAsync(new MailRequest 
+            await _mailService.SendMailAsync(new MailRequest
             {
                 Body = GetManagementLoginTemplate(userInfo),
                 MailTo = AdminEmail,
@@ -202,6 +188,48 @@ namespace MyDomainPasswordChange
             var templatePath = Path.Combine(_webHostEnvironment.WebRootPath, $"templates{Path.DirectorySeparatorChar}mail_admin_login_template.html");
             var template = File.ReadAllText(templatePath);
             template = template.Replace("{accountName}", $"{userInfo.DisplayName} ({userInfo.Email})");
+            template = template.Replace("{requestIp}", HttpContext.Connection.RemoteIpAddress.ToString());
+            var dateTime = DateTime.Now;
+            template = template.Replace("{time}", dateTime.ToShortTimeString());
+            template = template.Replace("{date}", dateTime.ToShortDateString());
+            return template;
+        }
+
+        public async Task SendManagementUserPasswordResetted(UserInfo userInfo, (string name, string email) adminInfo)
+            => await _mailService.SendMailAsync(new MailRequest
+            {
+                Body = GetManagementUserPasswordResettedTemplate(userInfo, adminInfo),
+                MailTo = AdminEmail,
+                Subject = "Contraseña reseteada por administrador - Cambio de contraseña"
+            });
+
+        private string GetManagementUserPasswordResettedTemplate(UserInfo userInfo, (string name, string email) adminInfo)
+        {
+            var templatePath = Path.Combine(_webHostEnvironment.WebRootPath, $"templates{Path.DirectorySeparatorChar}mail_admin_user_password_resetted.html");
+            var template = File.ReadAllText(templatePath);
+            template = template.Replace("{adminAccountName}", $"{adminInfo.name} ({adminInfo.email})");
+            template = template.Replace("{userAccountName}", $"{userInfo.DisplayName} ({userInfo.Email})");
+            template = template.Replace("{requestIp}", HttpContext.Connection.RemoteIpAddress.ToString());
+            var dateTime = DateTime.Now;
+            template = template.Replace("{time}", dateTime.ToShortTimeString());
+            template = template.Replace("{date}", dateTime.ToShortDateString());
+            return template;
+        }
+
+        public async Task SendManagementUserPasswordSetted(UserInfo userInfo, (string name, string email) adminInfo)
+            => await _mailService.SendMailAsync(new MailRequest
+            {
+                Body = GetManagementUserPasswordSettedTemplate(userInfo, adminInfo),
+                MailTo = AdminEmail,
+                Subject = "Contraseña establecida por administrador - Cambio de contraseña"
+            });
+
+        private string GetManagementUserPasswordSettedTemplate(UserInfo userInfo, (string name, string email) adminInfo)
+        {
+            var templatePath = Path.Combine(_webHostEnvironment.WebRootPath, $"templates{Path.DirectorySeparatorChar}mail_admin_user_password_setted.html");
+            var template = File.ReadAllText(templatePath);
+            template = template.Replace("{adminAccountName}", $"{adminInfo.name} ({adminInfo.email})");
+            template = template.Replace("{userAccountName}", $"{userInfo.DisplayName} ({userInfo.Email})");
             template = template.Replace("{requestIp}", HttpContext.Connection.RemoteIpAddress.ToString());
             var dateTime = DateTime.Now;
             template = template.Replace("{time}", dateTime.ToShortTimeString());

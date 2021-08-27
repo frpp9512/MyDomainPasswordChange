@@ -15,5 +15,7 @@ namespace MyDomainPasswordChange.Management
         Task SendExpirationNotificationAsync(UserInfo userInfo, DateTime expirationDate);
         Task SendManagementLoginFailAlertAsync();
         Task SendManagementLogin(UserInfo userInfo);
+        Task SendManagementUserPasswordResetted(UserInfo userInfo, (string name, string email) adminInfo);
+        Task SendManagementUserPasswordSetted(UserInfo userInfo, (string name, string email) adminInfo);
     }
 }

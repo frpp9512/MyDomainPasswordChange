@@ -50,8 +50,6 @@ namespace MyDomainPasswordChange.Controllers
                 {
                     var user = _passwordManagement.GetUserInfo(viewModel.Username);
 
-                    await _notificator.SendManagementLogin(user);
-
                     if (user.Enabled && 
                         user.IsDomainAdmin && 
                         user.Groups.Any(g => 
@@ -73,15 +71,16 @@ namespace MyDomainPasswordChange.Controllers
                             claims.Add(new Claim(ClaimTypes.Role, "DependencyAdmin"));
                         }
                         var dependencyGroups = string.Join(";", user.Groups.Where(g => _groupsManagement.ExistDelclarationWithName(g.AccountName))
-                                                                  .Select(g => g.AccountName)
-                                                                  .ToArray());
+                                                                           .Select(g => g.AccountName)
+                                                                           .ToArray());
                         claims.Add(new Claim("DependencyGroups", dependencyGroups));
                         var identity = new ClaimsIdentity(claims, "CookieAuth");
                         var principal = new ClaimsPrincipal(identity);
                         await HttpContext.SignInAsync("CookieAuth",
                                                       principal,
                                                       new AuthenticationProperties { IsPersistent = viewModel.RememberMe });
-
+                        
+                        await _notificator.SendManagementLogin(user);
                         return Redirect(viewModel.ReturnUrl);
                     }
                 }

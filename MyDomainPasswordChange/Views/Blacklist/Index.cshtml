@@ -33,43 +33,54 @@
             </div>
         </div>
 
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>
-                        Agregado
-                    </th>
-                    <th>
-                        Dirección IP
-                    </th>
-                    <th>
-                        Motivo
-                    </th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model.BlacklistedIpAddresses)
-                {
-                    <tr id="@item.Id.ToString()">
-                        <td>
-                            @Html.DisplayFor(modelItem => item.AddedInBlacklist)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.IpAddress)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Reason)
-                        </td>
-                        <td>
-                            <button class="btn btn-danger" onclick="RemoveFromBlacklist('@item.Id.ToString()')" title="Eliminar de la lista negra">
-                                <span class="fa fa-trash"></span>
-                            </button>
-                        </td>
+        @if (Model.BlacklistedIpAddresses.Any())
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>
+                            Agregado
+                        </th>
+                        <th>
+                            Dirección IP
+                        </th>
+                        <th>
+                            Motivo
+                        </th>
+                        <th></th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.BlacklistedIpAddresses)
+                    {
+                        <tr id="@item.Id.ToString()">
+                            <td>
+                                @Html.DisplayFor(modelItem => item.AddedInBlacklist)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.IpAddress)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Reason)
+                            </td>
+                            <td>
+                                <button class="btn btn-danger" onclick="RemoveFromBlacklist('@item.Id.ToString()')" title="Eliminar de la lista negra">
+                                    <span class="fa fa-trash"></span>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="d-flex flex-column justify-content-center p-5 m-auto" style="width: 450px; border: 1px solid #ccc; border-radius: 5px; box-shadow: 1px 1px 5px #ccc;">
+                <h3>Lista negra vacía</h3>
+                <p>No existen direcciones registradas en la lista negra.</p>
+            </div>
+        }
+
     </div>
 </main>
 

@@ -23,18 +23,21 @@ namespace MyDomainPasswordChange.Controllers
         private readonly IDependenciesGroupsManagement _groupsManagement;
         private readonly IPasswordHistoryManager _historyManager;
         private readonly IConfiguration _configuration;
+        private readonly IMailNotificator _mailNotificator;
 
         public ManagementController(IDomainPasswordManagement passwordManagement,
                                     ILogger<ManagementController> logger,
                                     IDependenciesGroupsManagement groupsManagement,
                                     IPasswordHistoryManager historyManager,
-                                    IConfiguration configuration)
+                                    IConfiguration configuration,
+                                    IMailNotificator mailNotificator)
         {
             _passwordManagement = passwordManagement;
             _logger = logger;
             _groupsManagement = groupsManagement;
             _historyManager = historyManager;
             _configuration = configuration;
+            _mailNotificator = mailNotificator;
         }
 
         [HttpGet]
@@ -155,13 +158,22 @@ namespace MyDomainPasswordChange.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult ResetUserPassword(UserViewModel viewModel)
+        public async Task<IActionResult> ResetUserPasswordAsync(UserViewModel viewModel)
         {
             if (_passwordManagement.UserExists(viewModel.AccountName))
             {
                 try
                 {
                     _passwordManagement.ResetPassword(viewModel.AccountName, viewModel.Description);
+                    await _mailNotificator.SendManagementUserPasswordResetted(
+                        new UserInfo
+                        {
+                            AccountName = viewModel.AccountName,
+                            Description = viewModel.Description,
+                            DisplayName = viewModel.DisplayName,
+                            Email = viewModel.Email,
+                        },
+                        (User.Identity.Name, User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value));
                     TempData["PasswordResetted"] = viewModel.DisplayName;
                 }
                 catch (Exception ex)
@@ -244,9 +256,27 @@ namespace MyDomainPasswordChange.Controllers
                         {
                             _passwordManagement.SetUserPassword(viewModel.AccountName, viewModel.Password);
                             await _historyManager.RegisterPasswordAsync(viewModel.AccountName, viewModel.Password);
+                            await _mailNotificator.SendManagementUserPasswordResetted(
+                                new UserInfo
+                                {
+                                    AccountName = viewModel.AccountName,
+                                    Description = viewModel.Description,
+                                    DisplayName = viewModel.DisplayName,
+                                    Email = viewModel.Email,
+                                },
+                                (User.Identity.Name, User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value));
                             TempData["PasswordSetted"] = new string[] { viewModel.DisplayName };
-                            return RedirectToAction("Index");
-                        }
+                            await _mailNotificator.SendManagementUserPasswordSetted(
+                                new UserInfo
+                                {
+                                    AccountName = viewModel.AccountName,
+                                    Description = viewModel.Description,
+                                    DisplayName = viewModel.DisplayName,
+                                    Email = viewModel.Email,
+                                },
+                                (User.Identity.Name, User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value));
+                                    return RedirectToAction("Index");
+                                }
                         catch (Exception ex)
                         {
                             TempData["Error"] = ex.Message;
