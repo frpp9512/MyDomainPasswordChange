@@ -1,0 +1,52 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Cambio de contraseña</title>
+    <style>
+        html {
+            margin: 20px 10%;
+            font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif
+        }
+
+        .header {
+            font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+            color: #eee;
+            background: linear-gradient(45deg, rgb(150,180,180), rgb(250,220,180));
+            padding: 10px;
+        }
+
+        .footer {
+            border-top: 1px solid #ccc;
+            padding-top: 10px;
+        }
+
+        span {
+            padding: 4px;
+            color: white;
+            font-weight: bold;
+            background: rgb(150,180,180);
+            border-radius: 3px;
+        }
+
+        .highlighted {
+            color: rgb(150,180,180);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <p><span>Notificación</span></p>
+        <h1>Su contraseña ha cambiado</h1>
+    </header>
+    <article class="body">
+        <p>Hola {accountName}, este correo es para notificarle que se ha realizado un cambio en su contraseña de dominio desde la IP {requestIp} a las {time} del día {date}.</p>
+        <p>Su contraseña expirará a los {expirationDays} días que debe de conincidir con la fecha {expirationDate}.</p>
+    </article>
+    <footer class="footer">
+        <p><small>Para más información contacte con la administración informática de la empresa mediante las siguientes vías:</small></p>
+        <p><small><span>Correo Electrónico</span> admin@ingeco.cu | <span>Jabber</span> srodriguez@jabber.ingeco.cu, fperez@jabber.ingeco.cu, kdorta@jabber.ingeco.cu</small></p>
+        <p><small><span>Teléfonos</span> Jefe de informática: +53 52132325, Administrador de redes: +53 59956113, Responsable de seguridad informática: +53 52152225</small></p>
+        <small class="highlighted"><strong><i>Este correo es solo de notificación, por favor no responder a esta dirección.</i></strong></small>
+    </footer>
+</body>
+</html>
