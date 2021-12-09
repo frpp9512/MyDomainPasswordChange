@@ -48,7 +48,7 @@ namespace MyDomainPasswordChange
                     config.LogoutPath = "/Auth/Logout";
                     config.AccessDeniedPath = "/Auth/AccessDenied";
                 });
-            services.AddAutoMapper(typeof(Startup).Assembly);
+            //services.AddAutoMapper(typeof(Startup).Assembly);
             services.AddTransient<IDependenciesGroupsManagement, DependenciesGroupsManagement>();
             services.AddControllersWithViews();
         }

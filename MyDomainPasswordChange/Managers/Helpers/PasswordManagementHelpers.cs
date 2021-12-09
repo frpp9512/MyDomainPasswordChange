@@ -21,7 +21,7 @@ namespace MyDomainPasswordChange
         /// <returns>The configured dependency injection container.</returns>
         public static IServiceCollection AddPasswordManagement(this IServiceCollection services)
         {
-            services.AddTransient<IBindCredentialsProvider>(services => new BindCredentialsProvider(services.GetService<IConfiguration>()));
+            services.AddSingleton<IBindCredentialsProvider>(services => new BindCredentialsProvider(services.GetService<IConfiguration>()));
             services.AddTransient<IDomainPasswordManagement, MyDomainPasswordManagement>();
             return services;
         }
