@@ -9,16 +9,22 @@ namespace MyDomainPasswordChange.Managers
 {
     public class BindCredentialsProvider : IBindCredentialsProvider
     {
-        private readonly IConfiguration _configuration;
+        private readonly string _username;
+        private readonly string _password;
+        private readonly string _searchBase;
+        private readonly string _ldapServer;
 
         public BindCredentialsProvider(IConfiguration configuration)
         {
-            _configuration = configuration;
+            _username = configuration["LdapBindUsername"];
+            _password = configuration["LdapBindPassword"];
+            _searchBase = configuration["LdapSearchBase"];
+            _ldapServer = configuration["LdapServer"];
         }
 
-        public string GetBindPassword() => _configuration["LdapBindPassword"];
-        public string GetBindUsername() => _configuration["LdapBindUsername"];
-        public string GetLdapSearchBase() => _configuration["LdapSearchBase"];
-        public string GetLdapServer() => _configuration["LdapServer"];
+        public string GetBindPassword() => _password;
+        public string GetBindUsername() => _username;
+        public string GetLdapSearchBase() => _searchBase;
+        public string GetLdapServer() => _ldapServer;
     }
 }

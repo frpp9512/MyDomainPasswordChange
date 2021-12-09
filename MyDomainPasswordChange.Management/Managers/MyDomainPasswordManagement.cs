@@ -36,7 +36,7 @@ namespace MyDomainPasswordChange.Management
                                                _credentialsProvider.GetLdapSearchBase(),
                                                _credentialsProvider.GetBindUsername(),
                                                _credentialsProvider.GetBindPassword());
-            return context.ValidateCredentials(accountName, password);
+            return context.ValidateCredentials(accountName, password, ContextOptions.ServerBind);
         }
 
         /// <summary>
