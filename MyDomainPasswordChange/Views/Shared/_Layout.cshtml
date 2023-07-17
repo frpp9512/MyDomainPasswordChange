@@ -22,7 +22,7 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex flex-sm-row-reverse">
                     <ul class="navbar-nav ml-auto">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">About</a>
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy"><span class="fa fa-question-circle text-primary"></span></a>
                         </li>
                     </ul>
                 </div>
@@ -34,12 +34,16 @@
 
     <footer class="border-top footer text-muted">
         <div class="container">
-            <small>&copy; 2021 - Servicio de cambio de contraseñas INGECO - Frank Raúl Pérez Pérez <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a></small>
+            <small>&copy; @DateTime.Now.Year - Servicio de cambio de contraseñas INGECO - Frank Raúl Pérez Pérez <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a></small>
             <small>
                 @if (User.Identity.IsAuthenticated)
                 {
                     <span><span class="fas fa-user-alt"></span> @User.Identity.Name</span>
                     <span><a href="/Management">[<span class="fas fa-tools"></span> Administración]</a></span>
+                    if (User.IsInRole("GlobalAdmin"))
+                    {
+                        <span><a href="/Blacklist">[<span class="fas fa-skull"></span> Lista negra]</a></span>
+                    }
                     <span><a href="/Auth/Logout">[<span class="fas fa-door-open"></span> Cerrar sesión]</a></span>
                 }
                 else

@@ -90,83 +90,78 @@
             }
         </div>
 
-        <table class="table table-responsive w-100" style="font-size: 12px;">
-            <thead class="font-weight-bold">
-                <tr>
-                    <td>
-                        Nombre completo
-                    </td>
-                    <td>
-                        Nombre de usuario
-                    </td>
-                    <td>
-                        Descripción
-                    </td>
-                    <td colspan="2">
-                        Contraseña expira
-                    </td>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var dependency in Model.Groups)
-                {
+        <div class="table-responsive">
+            <table class="table w-100" style="font-size: 12px;">
+                <thead class="font-weight-bold">
                     <tr>
-                        <td colspan="4" class="justify-content-center">
-                            <h5>@dependency.Description</h5>
-                            <span>
-                                <i class="fas fa-users"></i> @dependency.Users.Count
-                            </span>
-                            @if (dependency.GetCloseToExpirePasswordUserCount(config.GetValue<int>("passwordExpirationDays")) > 0)
-                            {
-                                <span class="text-warning ml-2">
-                                    <i class="fas fa-exclamation-triangle"></i> @dependency.GetCloseToExpirePasswordUserCount(config.GetValue<int>("passwordExpirationDays"))
-                                </span>
-                            }
-                            @if (dependency.GetExpiredPasswordUserCount(config.GetValue<int>("passwordExpirationDays")) > 0)
-                            {
-                                <span class="text-danger ml-2">
-                                    <i class="fas fa-exclamation-circle"></i> @dependency.GetExpiredPasswordUserCount(config.GetValue<int>("passwordExpirationDays"))
-                                </span>
-                            }
-                            @if (dependency.GetNeverExpiresPasswordUserCount() > 0)
-                            {
-                                <span class="text-muted ml-2">
-                                    <i class="fas fa-infinity"></i> @dependency.GetNeverExpiresPasswordUserCount()
-                                </span>
-                            }
-                            @if (dependency.GetPendingToSetPasswordUserCount() > 0)
-                            {
-                                <span class="text-info ml-2">
-                                    <i class="fas fa-clock"></i> @dependency.GetPendingToSetPasswordUserCount()
-                                </span>
-                            }
-                        </td>
-                        <td class="text-right">
-                            @if (Model.Groups.Count > 1)
-                            {
-                                <a class="btn btn-primary collapser" id="collapser-@dependency.Name" data-toggle="collapse" href="#@dependency.Name" role="button" aria-expanded="false" aria-controls="@dependency.Name">
-                                    <span class="fas fa-list"></span>
-                                </a>
-                            }
-                        </td>
+                        <th>Nombre completo</th>
+                        <th>Nombre de usuario</th>
+                        <th>Descripción</th>
+                        <th>Contraseña expira</th>
+                        <th></th>
                     </tr>
-                    @foreach (var user in dependency.Users.OrderBy(u => u.LastPasswordSet))
+                </thead>
+                <tbody>
+                    @foreach (var dependency in Model.Groups)
                     {
-                        <tr class="@(Model.Groups.Count > 1 ? "collapse" : "")" id="@dependency.Name">
-                            <td>@user.DisplayName</td>
-                            <td>@user.AccountName</td>
-                            <td>@user.Description</td>
-                            <td class="text-right">
-                                <partial name="_PasswordExpirationDateLabel" model="user" />
+                        <tr>
+                            <td colspan="4" class="justify-content-center">
+                                <h5>@dependency.Description</h5>
+                                <span>
+                                    <i class="fas fa-users"></i> @dependency.Users.Count
+                                </span>
+                                @if (dependency.GetCloseToExpirePasswordUserCount(config.GetValue<int>("passwordExpirationDays")) > 0)
+                                {
+                                    <span class="text-warning ml-2">
+                                        <i class="fas fa-exclamation-triangle"></i> @dependency.GetCloseToExpirePasswordUserCount(config.GetValue<int>("passwordExpirationDays"))
+                                    </span>
+                                }
+                                @if (dependency.GetExpiredPasswordUserCount(config.GetValue<int>("passwordExpirationDays")) > 0)
+                                {
+                                    <span class="text-danger ml-2">
+                                        <i class="fas fa-exclamation-circle"></i> @dependency.GetExpiredPasswordUserCount(config.GetValue<int>("passwordExpirationDays"))
+                                    </span>
+                                }
+                                @if (dependency.GetNeverExpiresPasswordUserCount() > 0)
+                                {
+                                    <span class="text-muted ml-2">
+                                        <i class="fas fa-infinity"></i> @dependency.GetNeverExpiresPasswordUserCount()
+                                    </span>
+                                }
+                                @if (dependency.GetPendingToSetPasswordUserCount() > 0)
+                                {
+                                    <span class="text-info ml-2">
+                                        <i class="fas fa-clock"></i> @dependency.GetPendingToSetPasswordUserCount()
+                                    </span>
+                                }
                             </td>
-                            <td>
-                                <a asp-action="ResetUserPassword" asp-controller="Management" asp-route-accountName="@user.AccountName"><i class="btn btn-info fas fa-undo-alt"></i></a>
-                                <a asp-action="SetUserPassword" asp-controller="Management" asp-route-accountName="@user.AccountName"><i class="btn btn-success fas fa-asterisk"></i></a>
+                            <td class="text-right">
+                                @if (Model.Groups.Count > 1)
+                                {
+                                    <a class="btn btn-primary collapser" id="collapser-@dependency.Name" data-toggle="collapse" href="#@dependency.Name" role="button" aria-expanded="false" aria-controls="@dependency.Name">
+                                        <span class="fas fa-list"></span>
+                                    </a>
+                                }
                             </td>
                         </tr>
+                        @foreach (var user in dependency.Users.OrderBy(u => u.LastPasswordSet))
+                        {
+                            <tr class="@(Model.Groups.Count > 1 ? "collapse" : "")" id="@dependency.Name">
+                                <td>@user.DisplayName</td>
+                                <td>@user.AccountName</td>
+                                <td>@user.Description</td>
+                                <td class="text-right">
+                                    <partial name="_PasswordExpirationDateLabel" model="user" />
+                                </td>
+                                <td align="right">
+                                    <a asp-action="ResetUserPassword" asp-controller="Management" asp-route-accountName="@user.AccountName"><i class="btn btn-info fas fa-undo-alt m-1"></i></a>
+                                    <a asp-action="SetUserPassword" asp-controller="Management" asp-route-accountName="@user.AccountName"><i class="btn btn-success fas fa-asterisk m-1"></i></a>
+                                </td>
+                            </tr>
+                        }
                     }
-                }
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
     </div>
 </main>

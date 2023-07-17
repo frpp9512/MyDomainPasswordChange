@@ -1,14 +1,8 @@
-﻿using MyDomainPasswordChange.Data.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
-namespace MyDomainPasswordChange.Models
+namespace MyDomainPasswordChange.Models;
+
+public class BlacklistIndexViewModel
 {
-    public class BlacklistIndexViewModel
-    {
-        public IEnumerable<BlacklistedIpViewModel> BlacklistedIpAddresses { get; set; }
-    }
+    public IEnumerable<BlacklistedIpViewModel> BlacklistedIpAddresses { get; set; }
 }

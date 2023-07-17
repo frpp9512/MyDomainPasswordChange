@@ -1,16 +1,10 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
-namespace MyDomainPasswordChange
+namespace MyDomainPasswordChange.Managers.Interfaces;
+
+public interface IAlertCountingManagement
 {
-    public interface IAlertCountingManagement
-    {
-        public Task CountChallengeFailAsync();
-        public Task CountPasswordFailAsync(string accountName);
-        public Task CountManagementAuthFailAsync();
-    }
+    public Task CountChallengeFailAsync();
+    public Task CountPasswordFailAsync(string accountName);
+    public Task CountManagementAuthFailAsync();
 }

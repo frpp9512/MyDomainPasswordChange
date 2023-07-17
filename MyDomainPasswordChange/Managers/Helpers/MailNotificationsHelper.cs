@@ -1,29 +1,25 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using MyDomainPasswordChange.Management;
-using MyDomainPasswordChange.Managers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using MyDomainPasswordChange.Management.Interfaces;
+using MyDomainPasswordChange.Management.Managers;
+using MyDomainPasswordChange.Managers.Services;
 
-namespace MyDomainPasswordChange
+namespace MyDomainPasswordChange.Managers.Helpers;
+
+/// <summary>
+/// A set of extensions methods for the Mail Notification managament services.
+/// </summary>
+public static class MailNotificationsHelper
 {
     /// <summary>
-    /// A set of extensions methods for the Mail Notification managament services.
+    /// Adds all the dependencies needed for the Mail Notification management.
     /// </summary>
-    public static class MailNotificationsHelper
+    /// <param name="services">The dependency injection container.</param>
+    /// <returns>The configured dependency injection container.</returns>
+    public static IServiceCollection AddMailNotifications(this IServiceCollection services)
     {
-        /// <summary>
-        /// Adds all the dependencies needed for the Mail Notification management.
-        /// </summary>
-        /// <param name="services">The dependency injection container.</param>
-        /// <returns>The configured dependency injection container.</returns>
-        public static IServiceCollection AddMailNotifications(this IServiceCollection services)
-        {
-            services.AddTransient<IMailSettingsProvider, MailSettingsProvider>();
-            services.AddSingleton<IMyMailService, MyMailService>();
-            services.AddTransient<IMailNotificator, MailNotificator>();
-            return services;
-        }
+        _ = services.AddTransient<IMailSettingsProvider, MailSettingsProvider>();
+        _ = services.AddSingleton<IMyMailService, MyMailService>();
+        _ = services.AddTransient<IMailNotificator, MailNotificator>();
+        return services;
     }
 }

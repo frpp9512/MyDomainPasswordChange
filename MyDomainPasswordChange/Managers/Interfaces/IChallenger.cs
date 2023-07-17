@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Drawing;
 
-namespace MyDomainPasswordChange
+namespace MyDomainPasswordChange.Managers.Interfaces;
+
+public interface IChallenger
 {
-    public interface IChallenger
-    {
-        int GetChallenge();
-        Image GetChallengeImage(int challengeId);
-        bool EvaluateChallengeAnswer(int challengeId, string answer);
-    }
+    int GetChallenge();
+    Image GetChallengeImage(int challengeId);
+    bool EvaluateChallengeAnswer(int challengeId, string answer);
 }

@@ -1,16 +1,11 @@
 ﻿using AutoMapper;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace MyDomainPasswordChange.Mappings
+namespace MyDomainPasswordChange.Mappings;
+
+public class MappingProfile : Profile
 {
-    public class MappingProfile : Profile
+    public MappingProfile()
     {
-        public MappingProfile()
-        {
-            // Create mappings in here
-        }
+        // Create mappings in here
     }
 }

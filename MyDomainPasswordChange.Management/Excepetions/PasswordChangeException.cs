@@ -1,20 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.DirectoryServices.AccountManagement;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace MyDomainPasswordChange.Management
+namespace MyDomainPasswordChange.Management.Excepetions;
+
+/// <summary>
+/// Represents an error with the password change process.
+/// </summary>
+public class PasswordChangeException : Exception
 {
-    /// <summary>
-    /// Represents an error with the password change process.
-    /// </summary>
-    public class PasswordChangeException : Exception
+    public PasswordChangeException(string message)
+        : base(message)
     {
-        public PasswordChangeException(string message)
-            : base(message)
-        {
 
-        }
     }
 }

@@ -1,29 +1,25 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using MyDomainPasswordChange.Management;
-using MyDomainPasswordChange.Managers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using MyDomainPasswordChange.Management.Interfaces;
+using MyDomainPasswordChange.Management.Managers;
+using MyDomainPasswordChange.Managers.Services;
 
-namespace MyDomainPasswordChange
+namespace MyDomainPasswordChange.Managers.Helpers;
+
+/// <summary>
+/// A set of extensions methods for the Password Management service.
+/// </summary>
+public static class PasswordManagementHelpers
 {
     /// <summary>
-    /// A set of extensions methods for the Password Management service.
+    /// Adds all the dependencies needed for the Password Management.
     /// </summary>
-    public static class PasswordManagementHelpers
+    /// <param name="services">The dependency injection container.</param>
+    /// <returns>The configured dependency injection container.</returns>
+    public static IServiceCollection AddPasswordManagement(this IServiceCollection services)
     {
-        /// <summary>
-        /// Adds all the dependencies needed for the Password Management.
-        /// </summary>
-        /// <param name="services">The dependency injection container.</param>
-        /// <returns>The configured dependency injection container.</returns>
-        public static IServiceCollection AddPasswordManagement(this IServiceCollection services)
-        {
-            services.AddSingleton<IBindCredentialsProvider>(services => new BindCredentialsProvider(services.GetService<IConfiguration>()));
-            services.AddTransient<IDomainPasswordManagement, MyDomainPasswordManagement>();
-            return services;
-        }
+        _ = services.AddSingleton<IBindCredentialsProvider>(services => new BindCredentialsProvider(services.GetService<IConfiguration>()));
+        _ = services.AddTransient<IDomainPasswordManagement, MyDomainPasswordManagement>();
+        return services;
     }
 }

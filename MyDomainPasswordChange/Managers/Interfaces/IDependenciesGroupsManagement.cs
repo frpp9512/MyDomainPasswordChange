@@ -1,13 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using MyDomainPasswordChange.Managers.Models;
+using System.Collections.Generic;
 
-namespace MyDomainPasswordChange
+namespace MyDomainPasswordChange.Managers.Interfaces;
+
+public interface IDependenciesGroupsManagement
 {
-    public interface IDependenciesGroupsManagement
-    {
-        bool DefineIfGlobalDeclaration(string groupName);
-        bool DefineIfDependencyDeclaration(string groupName);
-        bool ExistDelclarationWithName(string groupName);
-        DependencyDeclaration GetDeclarationByName(string groupName);
-        IEnumerable<DependencyDeclaration> GetAllDependenciesDeclarations();
-    }
+    bool DefineIfGlobalDeclaration(string groupName);
+    bool DefineIfDependencyDeclaration(string groupName);
+    bool ExistDelclarationWithName(string groupName);
+    DependencyDeclaration GetDeclarationByName(string groupName);
+    IEnumerable<DependencyDeclaration> GetAllDependenciesDeclarations();
 }

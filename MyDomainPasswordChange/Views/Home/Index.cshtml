@@ -1,5 +1,8 @@
-﻿@model MyDomainPasswordChange.Models.ChangePasswordViewModel
+﻿@using MyDomainPasswordChange.Managers.Interfaces
+@model MyDomainPasswordChange.Models.ChangePasswordViewModel
+
 @inject IChallenger challenger
+
 @{
     ViewData["Title"] = "Inicio";
     var challenge = challenger.GetChallenge();
@@ -7,15 +10,21 @@
 
 <div class="outer">
     <div class="middle">
-        <div class="d-block col-11 col-md-7 col-lg-6 col-xl-4 p-2 p-md-3 p-lg-5 chpasswordbox fade-in">
-            <div class="d-block m-auto text-center border-bottom pl-5 pr-5">
-                <img src="~/img/password_logo.png" class="img-fluid mb-3" />
+        <div class="d-flex flex-md-row flex-column col-10 col-lg-6 p-md-3 p-lg-5 chpasswordbox fade-in p-5" style="gap: 35px;">
+            <div class="d-flex flex-column justify-content-center align-items-center col-md-4 col-12 pt-5">
+                <div class="d-block m-auto text-center w-75 d-md-none">
+                    <img src="/img/password_logo.png" class="img-fluid mb-3" />
+                </div>
+                <div class="d-md-block m-auto text-center d-none">
+                    <img src="/img/password-logo-vertical.png" class="img-fluid mb-3" />
+                </div>
+                <div class="text-center">
+                    <p class="mt-2 mb-n2 text-muted" style="font-size: 0.8rem;">Recuerde no compartir <b>NUNCA</b> su contraseña.</p>
+                </div>
             </div>
-            <div style="padding: 5%;">
+            
+            <div class="d-flex flex-column justify-content-between h-100">
                 <form method="post" asp-action="ChangePassword" asp-antiforgery="true">
-                    <div>
-                        <small>Rellene el formulario debidamente para cambiar su contraseaña:</small>
-                    </div>
                     <div asp-validation-summary="All" class="text-danger"></div>
                     <div class="form-group">
                         <input asp-for="Username" class="form-control" placeholder="Nombre de usuario" />
@@ -48,12 +57,9 @@
                     </div>
                     <div>
                         <input type="hidden" name="ChallengeId" id="ChallengeId" value="@challenge" />
-                        <button type="submit" class="btn btn-primary d-flex ml-auto">Cambiar contraseña</button>
+                        <button type="submit" class="btn btn-primary w-100 font-weight-bold"><span class="fa fa-key"></span> Cambiar contraseña</button>
                     </div>
                 </form>
-            </div>
-            <div class="border-top text-center">
-                <p class="mt-2 mb-n2"><small><strong>Recuerde</strong> su contraseña es la llave para todos los servicios que usted utiliza;<br /><strong class="text-danger">NO LA COMPARTA CON NADIE</strong></small></p>
             </div>
         </div>
     </div>

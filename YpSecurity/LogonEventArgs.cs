@@ -1,17 +1,16 @@
 ﻿using System;
 
-namespace YpSecurity
+namespace YpSecurity;
+
+public class LogonEventArgs : EventArgs
 {
-    public class LogonEventArgs : EventArgs
+    public LogonEventArgs(int logonTimes, DateTime logonAuthDateTime)
     {
-        public LogonEventArgs(int logonTimes, DateTime logonAuthDateTime)
-        {
-            LogonTimes = logonTimes;
-            AuthDateTime = logonAuthDateTime;
-        }
-
-        public int LogonTimes { get; }
-
-        public DateTime AuthDateTime { get; }
+        LogonTimes = logonTimes;
+        AuthDateTime = logonAuthDateTime;
     }
+
+    public int LogonTimes { get; }
+
+    public DateTime AuthDateTime { get; }
 }
