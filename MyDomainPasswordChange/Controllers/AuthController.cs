@@ -49,7 +49,7 @@ public class AuthController : Controller
         {
             if (_passwordManagement.AuthenticateUser(viewModel.Username, viewModel.Password))
             {
-                var user = _passwordManagement.GetUserInfo(viewModel.Username);
+                var user = await _passwordManagement.GetUserInfo(viewModel.Username);
 
                 if (user.Enabled &&
                     user.IsDomainAdmin &&

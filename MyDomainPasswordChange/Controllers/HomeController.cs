@@ -7,6 +7,7 @@ using MyDomainPasswordChange.Data.Interfaces;
 using MyDomainPasswordChange.Filters;
 using MyDomainPasswordChange.Management.Excepetions;
 using MyDomainPasswordChange.Management.Interfaces;
+using MyDomainPasswordChange.Management.Models;
 using MyDomainPasswordChange.Managers.Interfaces;
 using MyDomainPasswordChange.Models;
 using System;
@@ -49,7 +50,27 @@ public class HomeController : Controller
     }
 
     [HttpGet]
-    public IActionResult Index(string accountName = "") => View(model: new ChangePasswordViewModel { Username = accountName });
+    public async Task<IActionResult> Index(string accountName = "")
+    {
+        //var userInfo = new UserInfo
+        //{
+        //    AccountName = "testaccount1",
+        //    FirstName = "Test",
+        //    LastName = "Account",
+        //    DisplayName = "Test Account Porpuse 1",
+        //    Email = "testaccount1@ingeco.cu",
+        //    Description = "Description of the test account",
+        //    Enabled = true,
+        //    MailboxCapacity = "100M",
+        //    PersonalId = "95120844341",
+        //    JobTitle = "Nada con importancia",
+        //    Office = "La oficina del terror",
+        //    Address = "En algún lugar de la mancha",
+        //    AllowedWorkstations = { "Abcd", "Defg", "Hijk" }
+        //};
+        //await _passwordManagement.CreateNewUserAsync(userInfo, "test.123*-", "Empresa", "Dirección", "accesoJabber", "navInternacionalRest", "mediaUser", "accesoNube", "accesoFtp", "depEmpresa");
+        return View(model: new ChangePasswordViewModel { Username = accountName });
+    }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -90,7 +111,7 @@ public class HomeController : Controller
 
             _passwordManagement.ChangeUserPassword(viewModel.Username, viewModel.Password, viewModel.NewPassword);
             await _historyManager.RegisterPasswordAsync(viewModel.Username, viewModel.NewPassword);
-            var userInfo = _passwordManagement.GetUserInfo(viewModel.Username);
+            var userInfo = await _passwordManagement.GetUserInfo(viewModel.Username);
             await _mailNotificator.SendChangePasswordNotificationAsync(viewModel.Username);
             TempData["PasswordChanged"] = true;
             return RedirectToAction("ChangePasswordSuccess", new UserViewModel

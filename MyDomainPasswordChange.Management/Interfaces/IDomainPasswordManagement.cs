@@ -11,7 +11,7 @@ public interface IDomainPasswordManagement
     void ChangeUserPassword(string accountName, string password, string newPassword);
     void SetUserPassword(string accountName, string newPassword);
     void ResetPassword(string accountName, string tempPassword);
-    UserInfo GetUserInfo(string accountName);
+    Task<UserInfo> GetUserInfo(string accountName);
     Task<UserInfo> GetUserInfoAsync(string accountName);
     bool UserExists(string accountName);
     Task<List<UserInfo>> GetAllActiveUsersInfo();
@@ -19,4 +19,5 @@ public interface IDomainPasswordManagement
     Task<GroupInfo> GetGroupInfoByNameAsync(string groupName);
     Task<Image> GetUserImage(string accountName);
     Task<byte[]> GetUserImageBytesAsync(string accountName);
+    Task<bool> CreateNewUserAsync(UserInfo userInfo, string password, string dependecyOU, string areaOU, params string[] groups);
 }

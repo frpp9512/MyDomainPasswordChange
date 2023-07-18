@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using MyDomainPasswordChange.Management.Models;
+using MyDomainPasswordChange.Models;
 
 namespace MyDomainPasswordChange.Mappings;
 
@@ -6,6 +8,8 @@ public class MappingProfile : Profile
 {
     public MappingProfile()
     {
-        // Create mappings in here
+        CreateMap<UserInfo, UserViewModel>();
+        CreateMap<UserInfo, SetUserPasswordViewModel>();
+        CreateMap<UserViewModel, UserInfo>();
     }
 }

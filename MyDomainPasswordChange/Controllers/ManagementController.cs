@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MyDomainPasswordChange.Data.Interfaces;
+using MyDomainPasswordChange.Extensions;
 using MyDomainPasswordChange.Filters;
 using MyDomainPasswordChange.Management.Excepetions;
 using MyDomainPasswordChange.Management.Interfaces;
@@ -28,13 +30,15 @@ public class ManagementController : Controller
     private readonly IPasswordHistoryManager _historyManager;
     private readonly IConfiguration _configuration;
     private readonly IMailNotificator _mailNotificator;
+    private readonly IMapper _mapper;
 
     public ManagementController(IDomainPasswordManagement passwordManagement,
                                 ILogger<ManagementController> logger,
                                 IDependenciesGroupsManagement groupsManagement,
                                 IPasswordHistoryManager historyManager,
                                 IConfiguration configuration,
-                                IMailNotificator mailNotificator)
+                                IMailNotificator mailNotificator,
+                                IMapper mapper)
     {
         _passwordManagement = passwordManagement;
         _logger = logger;
@@ -42,6 +46,7 @@ public class ManagementController : Controller
         _historyManager = historyManager;
         _configuration = configuration;
         _mailNotificator = mailNotificator;
+        _mapper = mapper;
     }
 
     [HttpGet]
@@ -52,7 +57,7 @@ public class ManagementController : Controller
 
         try
         {
-            var userInfo = _passwordManagement.GetUserInfo(accountName);
+            var userInfo = await _passwordManagement.GetUserInfo(accountName);
             groupsDeclarations = userInfo.Groups.Any(g => _groupsManagement.DefineIfGlobalDeclaration(g.AccountName))
                 ? _groupsManagement.GetAllDependenciesDeclarations()
                 : userInfo.Groups.Where(g => _groupsManagement.DefineIfDependencyDeclaration(g.AccountName))
@@ -109,23 +114,26 @@ public class ManagementController : Controller
                 Description = ldapGroup.Description
             };
             var groupUsers = await _passwordManagement.GetActiveUsersInfoFromGroupAsync(ldapGroup);
-            groupVM.Users = groupUsers.Select(u => new UserViewModel
-            {
-                AccountName = u.AccountName,
-                DisplayName = u.DisplayName,
-                Description = u.Description,
-                Email = u.Email,
-                LastPasswordSet = u.LastPasswordSet,
-                Enabled = u.Enabled,
-                PasswordNeverExpires = u.PasswordNeverExpires
-            }).ToList();
-
+            groupVM.Users = MapUsersToViewModels(groupUsers);
             viewModel.Groups.Add(groupVM);
         }
 
         var ldapGroups = groupsDeclarations.Select(g => _passwordManagement.GetGroupInfoByNameAsync(g.GroupName));
         return viewModel;
     }
+
+    private List<UserViewModel> MapUsersToViewModels(List<UserInfo> groupUsers) => groupUsers.Select(user =>
+    {
+        var vm = _mapper.Map<UserViewModel>(user);
+        vm.InternetAccess = user.Groups switch
+        {
+            var groups when groups.Any(g => g.AccountName == Constants.FullInternetGroup) => InternetAccess.Full,
+            var groups when groups.Any(g => g.AccountName == Constants.RestInternetGroup) => InternetAccess.Restricted,
+            var groups when groups.Any(g => g.AccountName == Constants.NationalInternetGroup) => InternetAccess.National,
+            _ => InternetAccess.None
+        };
+        return vm;
+    }).ToList();
 
     [HttpGet]
     public async Task<IActionResult> ResetUserPasswordAsync(string accountName)
@@ -148,14 +156,7 @@ public class ManagementController : Controller
 
         if (User.IsInRole("GlobalAdmin") || user.Groups.Any(g => User.Claims.First(c => c.Type == "DependencyGroups").Value.Contains(g.AccountName)))
         {
-            var viewModel = new UserViewModel
-            {
-                AccountName = accountName,
-                DisplayName = user.DisplayName,
-                Description = user.Description,
-                Email = user.Email,
-                LastPasswordSet = user.LastPasswordSet
-            };
+            var viewModel = _mapper.Map<UserViewModel>(user);
             return View(viewModel);
         }
 
@@ -173,13 +174,7 @@ public class ManagementController : Controller
             {
                 _passwordManagement.ResetPassword(viewModel.AccountName, viewModel.Description);
                 await _mailNotificator.SendManagementUserPasswordResetted(
-                    new UserInfo
-                    {
-                        AccountName = viewModel.AccountName,
-                        Description = viewModel.Description,
-                        DisplayName = viewModel.DisplayName,
-                        Email = viewModel.Email,
-                    },
+                    _mapper.Map<UserInfo>(viewModel),
                     (User.Identity.Name, User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value));
                 TempData["PasswordResetted"] = viewModel.DisplayName;
             }
@@ -219,14 +214,7 @@ public class ManagementController : Controller
             || user.Groups.Any(g => User.Claims.First(c => c.Type == "DependencyGroups").Value
                                                .Contains(g.AccountName)))
         {
-            var viewModel = new SetUserPasswordViewModel
-            {
-                AccountName = accountName,
-                DisplayName = user.DisplayName,
-                Description = user.Description,
-                Email = user.Email,
-                LastPasswordSet = user.LastPasswordSet
-            };
+            var viewModel = _mapper.Map<SetUserPasswordViewModel>(user);
             return View(viewModel);
         }
 
@@ -277,13 +265,7 @@ public class ManagementController : Controller
                             (User.Identity.Name, User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value));
                         TempData["PasswordSetted"] = new string[] { viewModel.DisplayName };
                         await _mailNotificator.SendManagementUserPasswordSetted(
-                            new UserInfo
-                            {
-                                AccountName = viewModel.AccountName,
-                                Description = viewModel.Description,
-                                DisplayName = viewModel.DisplayName,
-                                Email = viewModel.Email,
-                            },
+                            _mapper.Map<UserInfo>(viewModel),
                             (User.Identity.Name, User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value));
                         return RedirectToAction("Index");
                     }

@@ -23,4 +23,8 @@ public static class LdapAttributes
     public static readonly string JPEG_PHOTO = "jpegPhoto";
     public static readonly string PASSWORD_LAST_SET = "pwdLastSet";
     public static readonly string OBJECT_CLASS = "objectClass";
+    public static readonly string PO_BOX = "postOfficeBox";
+    public static readonly string ADDRESS = "streetAddress";
+    public static readonly string GID_NUMBER = "gidNumber";
+    public static readonly string OFFICE = "physicalDeliveryOfficeName";
 }

@@ -36,7 +36,7 @@ public class MailNotificator : IMailNotificator
 
     public async Task SendChangePasswordAlertAsync(string accountName)
     {
-        var user = _passwordManagement.GetUserInfo(accountName);
+        var user = await _passwordManagement.GetUserInfo(accountName);
         await _mailService.SendMailAsync(new MailRequest
         {
             Body = GetAlertMailTemplate(user.DisplayName),
@@ -49,7 +49,7 @@ public class MailNotificator : IMailNotificator
 
     public async Task SendChangePasswordNotificationAsync(string accountName)
     {
-        var user = _passwordManagement.GetUserInfo(accountName);
+        var user = await _passwordManagement.GetUserInfo(accountName);
         if (!string.IsNullOrEmpty(user.Email))
         {
             await _mailService.SendMailAsync(new MailRequest
