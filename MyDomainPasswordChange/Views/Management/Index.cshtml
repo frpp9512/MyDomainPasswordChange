@@ -96,7 +96,7 @@
                 <i class="fas fa-globe"></i> Acceso limitado a internet <b>@Model.Groups.Sum(group => group.Users.Count(user => user.InternetAccess == InternetAccess.Restricted))</b>
             </span>
             <span class="badge badge-light">
-                <i class="fas fa-globe"></i> Acceso nacional a internet <b>@Model.Groups.Sum(group => group.Users.Count(user => user.InternetAccess == InternetAccess.Restricted))</b>
+                <i class="fas fa-globe"></i> Acceso nacional a internet <b>@Model.Groups.Sum(group => group.Users.Count(user => user.InternetAccess == InternetAccess.National))</b>
             </span>
             <span class="badge badge-dark">
                 <i class="fas fa-globe"></i> Sin acceso a internet <b>@Model.Groups.Sum(group => group.Users.Count(user => user.InternetAccess == InternetAccess.None))</b>
