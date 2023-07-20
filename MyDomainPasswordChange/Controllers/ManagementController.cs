@@ -279,4 +279,42 @@ public class ManagementController : Controller
 
         return View(viewModel);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> UserDetailsAsync(string accountName)
+    {
+        UserInfo user;
+        try
+        {
+            user = await _passwordManagement.GetUserInfoAsync(accountName);
+        }
+        catch (UserNotFoundException)
+        {
+            TempData["UserUnknown"] = accountName;
+            return RedirectToAction("Index");
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = ex.Message;
+            return RedirectToAction("Index");
+        }
+
+        if (User.IsInRole("GlobalAdmin")
+            || user.Groups.Any(g => User.Claims.First(c => c.Type == "DependencyGroups").Value
+                                               .Contains(g.AccountName)))
+        {
+            var viewModel = _mapper.Map<UserViewModel>(user);
+            viewModel.InternetAccess = user.Groups switch
+            {
+                var groups when groups.Any(g => g.AccountName == Constants.FullInternetGroup) => InternetAccess.Full,
+                var groups when groups.Any(g => g.AccountName == Constants.RestInternetGroup) => InternetAccess.Restricted,
+                var groups when groups.Any(g => g.AccountName == Constants.NationalInternetGroup) => InternetAccess.National,
+                _ => InternetAccess.None
+            };
+            return View(viewModel);
+        }
+
+        TempData["UnauthorizedAction"] = true;
+        return RedirectToAction("Index");
+    }
 }
