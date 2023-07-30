@@ -79,6 +79,23 @@
                     @Html.DisplayFor(model => model.MailboxCapacity)
                 </dd>
                 <dt class="col-sm-2">
+                    @Html.DisplayNameFor(model => model.AllowedWorkstations)
+                    <span class="fa fa-laptop"></span>
+                </dt>
+                <dd class="col-sm-10">
+                    @if (Model.AllowedWorkstations.Any())
+                    {
+                        foreach (var workstation in Model.AllowedWorkstations)
+                        {
+                            <span class="badge badge-dark">@workstation</span>
+                        }
+                    }
+                    else
+                    {
+                        <span class="badge badge-danger">TODAS</span>
+                    }
+                </dd>
+                <dt class="col-sm-2">
                     @Html.DisplayNameFor(model => model.InternetAccess)
                 </dt>
                 <dd class="col-sm-10">
