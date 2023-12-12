@@ -9,7 +9,6 @@ namespace MyDomainPasswordChange.Managers.Services;
 public class DependenciesGroupsManagement : IDependenciesGroupsManagement
 {
     private readonly IConfiguration _configuration;
-
     private List<DependencyDeclaration> _dependencyDeclarations;
 
     public DependenciesGroupsManagement(IConfiguration configuration)

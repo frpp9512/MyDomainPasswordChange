@@ -2,7 +2,7 @@
 
 namespace MyDomainPasswordChange.Models;
 
-public class ChangePasswordViewModel
+public record ChangePasswordViewModel
 {
     [Required(ErrorMessage = "Debe de especificar el nombre de usuario debidamente.")]
     public string Username { get; set; }

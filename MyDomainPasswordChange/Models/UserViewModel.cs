@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace MyDomainPasswordChange.Models;
 
-public class UserViewModel
+public record UserViewModel
 {
     [Display(Name = "Nombre de usuario")]
     public string AccountName { get; set; }
@@ -43,7 +43,7 @@ public class UserViewModel
     public bool PasswordNeverExpires { get; set; }
 
     [Display(Name = "PC en las que inicia sesión")]
-    public List<string> AllowedWorkstations { get; set; } = new List<string> { "NONE" };
+    public List<string> AllowedWorkstations { get; set; } = ["NONE"];
 
     [Display(Name = "Capacidad del buzón de correo")]
     public string MailboxCapacity { get; set; }

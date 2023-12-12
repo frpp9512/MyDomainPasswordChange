@@ -3,7 +3,7 @@
 /// <summary>
 /// Represents a email send data.
 /// </summary>
-public class MailRequest
+public record MailRequest
 {
     /// <summary>
     /// The email address of the recipient.

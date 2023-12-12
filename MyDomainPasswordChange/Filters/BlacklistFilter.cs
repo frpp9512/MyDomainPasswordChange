@@ -4,11 +4,9 @@ using MyDomainPasswordChange.Data.Interfaces;
 
 namespace MyDomainPasswordChange.Filters;
 
-public class BlacklistFilter : ActionFilterAttribute
+public class BlacklistFilter(IIpAddressBlacklist blacklist) : ActionFilterAttribute
 {
-    private readonly IIpAddressBlacklist _blacklist;
-
-    public BlacklistFilter(IIpAddressBlacklist blacklist) => _blacklist = blacklist;
+    private readonly IIpAddressBlacklist _blacklist = blacklist;
 
     public override async void OnResultExecuting(ResultExecutingContext context)
     {
@@ -17,6 +15,5 @@ public class BlacklistFilter : ActionFilterAttribute
         {
             context.Result = new RedirectToActionResult("Blacklisted", "Blacklist", new { address = ipAddress });
         }
-        //base.OnResultExecuting(context);
     }
 }

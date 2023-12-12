@@ -4,7 +4,6 @@ using MyDomainPasswordChange.Management.Interfaces;
 using MyDomainPasswordChange.Management.Models;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -21,7 +20,7 @@ public class MyMailService : IMyMailService
     private readonly Queue<MailRequest> _mailQueue;
     private readonly Timer _timer;
     private bool _sendingMails = false;
-    private DateTime _lastEmailSended = DateTime.MinValue;
+    private DateTime _lastEmailSent = DateTime.MinValue;
 
     /// <summary>
     /// Creates a new instance of the <see cref="MyMailService"/>.
@@ -43,32 +42,36 @@ public class MyMailService : IMyMailService
     /// <param name="state"></param>
     private async void SendMails(object state)
     {
-        if (!_sendingMails && _mailQueue.Any())
+        if (_sendingMails || _mailQueue.Count == 0)
         {
-            var settings = _settingsProvider.GetMailSettings();
-            var now = DateTime.Now;
-            if ((now - _lastEmailSended).TotalSeconds > settings.MailIntervalInSeconds * 1.30)
-            {
-                _sendingMails = true;
-                var mailSended = 0;
-                while (_mailQueue.Any() && mailSended < settings.MaxMailPerInterval)
-                {
-                    try
-                    {
-                        await SendMail(_mailQueue.Dequeue());
-                        mailSended++;
-                    }
-                    catch (SmtpCommandException ex)
-                    {
-                        Console.WriteLine($"Exception founded sending email: {ex.Message}");
-                        return;
-                    }
-                }
+            return;
+        }
 
-                _lastEmailSended = DateTime.Now;
-                _sendingMails = false;
+        var settings = _settingsProvider.GetMailSettings();
+        var now = DateTime.Now;
+        if ((now - _lastEmailSent).TotalSeconds <= settings.MailIntervalInSeconds * 1.30)
+        {
+            return;
+        }
+
+        _sendingMails = true;
+        var mailsSent = 0;
+        while (_mailQueue.Count != 0 && mailsSent < settings.MaxMailPerInterval)
+        {
+            try
+            {
+                await SendMail(_mailQueue.Dequeue());
+                mailsSent++;
+            }
+            catch (SmtpCommandException ex)
+            {
+                Console.WriteLine($"Exception founded sending email: {ex.Message}");
+                return;
             }
         }
+
+        _lastEmailSent = DateTime.Now;
+        _sendingMails = false;
     }
 
     /// <summary>
@@ -114,5 +117,11 @@ public class MyMailService : IMyMailService
     {
         _mailQueue.Enqueue(request);
         return Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        _timer.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

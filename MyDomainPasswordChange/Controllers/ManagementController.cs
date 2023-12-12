@@ -22,32 +22,21 @@ namespace MyDomainPasswordChange.Controllers;
 
 [ServiceFilter(typeof(BlacklistFilter))]
 [Authorize]
-public class ManagementController : Controller
+public class ManagementController(IDomainPasswordManagement passwordManagement,
+                                  ILogger<ManagementController> logger,
+                                  IDependenciesGroupsManagement groupsManagement,
+                                  IPasswordHistoryManager historyManager,
+                                  IConfiguration configuration,
+                                  IMailNotificator mailNotificator,
+                                  IMapper mapper) : Controller
 {
-    private readonly IDomainPasswordManagement _passwordManagement;
-    private readonly ILogger<ManagementController> _logger;
-    private readonly IDependenciesGroupsManagement _groupsManagement;
-    private readonly IPasswordHistoryManager _historyManager;
-    private readonly IConfiguration _configuration;
-    private readonly IMailNotificator _mailNotificator;
-    private readonly IMapper _mapper;
-
-    public ManagementController(IDomainPasswordManagement passwordManagement,
-                                ILogger<ManagementController> logger,
-                                IDependenciesGroupsManagement groupsManagement,
-                                IPasswordHistoryManager historyManager,
-                                IConfiguration configuration,
-                                IMailNotificator mailNotificator,
-                                IMapper mapper)
-    {
-        _passwordManagement = passwordManagement;
-        _logger = logger;
-        _groupsManagement = groupsManagement;
-        _historyManager = historyManager;
-        _configuration = configuration;
-        _mailNotificator = mailNotificator;
-        _mapper = mapper;
-    }
+    private readonly IDomainPasswordManagement _passwordManagement = passwordManagement;
+    private readonly ILogger<ManagementController> _logger = logger;
+    private readonly IDependenciesGroupsManagement _groupsManagement = groupsManagement;
+    private readonly IPasswordHistoryManager _historyManager = historyManager;
+    private readonly IConfiguration _configuration = configuration;
+    private readonly IMailNotificator _mailNotificator = mailNotificator;
+    private readonly IMapper _mapper = mapper;
 
     [HttpGet]
     public async Task<IActionResult> IndexAsync()

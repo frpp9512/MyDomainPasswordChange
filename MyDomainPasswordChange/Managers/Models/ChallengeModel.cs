@@ -1,6 +1,6 @@
 ﻿namespace MyDomainPasswordChange.Managers.Models;
 
-public class ChallengeModel
+public record ChallengeModel
 {
     public int Id { get; set; }
     public string FileName { get; set; }

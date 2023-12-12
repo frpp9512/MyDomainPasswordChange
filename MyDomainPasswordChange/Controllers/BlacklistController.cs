@@ -11,11 +11,9 @@ using System.Threading.Tasks;
 namespace MyDomainPasswordChange.Controllers;
 
 [Authorize(Roles = "GlobalAdmin")]
-public class BlacklistController : Controller
+public class BlacklistController(IIpAddressBlacklist blacklist) : Controller
 {
-    private readonly IIpAddressBlacklist _blacklist;
-
-    public BlacklistController(IIpAddressBlacklist blacklist) => _blacklist = blacklist;
+    private readonly IIpAddressBlacklist _blacklist = blacklist;
 
     [HttpGet]
     public async Task<IActionResult> Index()

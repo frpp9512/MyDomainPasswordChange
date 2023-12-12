@@ -3,20 +3,12 @@ using MyDomainPasswordChange.Management.Interfaces;
 
 namespace MyDomainPasswordChange.Managers.Services;
 
-public class BindCredentialsProvider : IBindCredentialsProvider
+public class BindCredentialsProvider(IConfiguration configuration) : IBindCredentialsProvider
 {
-    private readonly string _username;
-    private readonly string _password;
-    private readonly string _searchBase;
-    private readonly string _ldapServer;
-
-    public BindCredentialsProvider(IConfiguration configuration)
-    {
-        _username = configuration["LdapBindUsername"];
-        _password = configuration["LdapBindPassword"];
-        _searchBase = configuration["LdapSearchBase"];
-        _ldapServer = configuration["LdapServer"];
-    }
+    private readonly string _username = configuration["LdapBindUsername"];
+    private readonly string _password = configuration["LdapBindPassword"];
+    private readonly string _searchBase = configuration["LdapSearchBase"];
+    private readonly string _ldapServer = configuration["LdapServer"];
 
     public string GetBindPassword() => _password;
     public string GetBindUsername() => _username;

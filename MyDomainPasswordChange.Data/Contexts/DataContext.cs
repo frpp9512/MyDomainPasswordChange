@@ -21,7 +21,6 @@ public abstract class DataContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         _ = modelBuilder.Entity<PasswordHistoryEntry>().HasKey(p => p.Id);
-
         _ = modelBuilder.Entity<BlacklistedIpAddress>().HasKey(b => b.Id);
 
         base.OnModelCreating(modelBuilder);

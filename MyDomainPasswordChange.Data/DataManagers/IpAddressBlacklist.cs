@@ -9,11 +9,9 @@ using System.Threading.Tasks;
 
 namespace MyDomainPasswordChange.Data.DataManagers;
 
-public class IpAddressBlacklist : IIpAddressBlacklist
+public class IpAddressBlacklist(DataContext dataContext) : IIpAddressBlacklist
 {
-    private readonly DataContext _dataContext;
-
-    public IpAddressBlacklist(DataContext dataContext) => _dataContext = dataContext;
+    private readonly DataContext _dataContext = dataContext;
 
     public async Task AddIpAddressAsync(string ipAddress, string reason)
     {

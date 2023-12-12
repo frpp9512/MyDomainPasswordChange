@@ -9,7 +9,7 @@ public delegate void PossibleAttack(object sender, LogonEventArgs e);
 public static class AuthUtil
 {
     [SecurityCritical]
-    internal static int logonTryCount = 0;
+    internal static int _logonTryCount = 0;
 
     public static event PossibleAttack PossibleAttackDetected = null;
 
@@ -28,49 +28,49 @@ public static class AuthUtil
     public static SecureString DecodeEncryptedPassword(string username, ref string password, SecureString b64Code)
     {
         var key = SecurityUtil.B64HashDecrypt(username, SecurityUtil.UnSecureString(b64Code));
-        if (key == password)
+        if (key != password)
         {
-            SecurityUtil.ReleaseFromMemory(ref password);
-            b64Code.Clear();
-            var ss = SecurityUtil.SecureString(key);
-            SecurityUtil.ReleaseFromMemory(ref key);
-            return ss;
+            throw new Exception("Incorrect password.");
         }
 
-        throw new Exception("Incorrect password.");
+        SecurityUtil.ReleaseFromMemory(ref password);
+        b64Code.Clear();
+        var ss = SecurityUtil.SecureString(key);
+        SecurityUtil.ReleaseFromMemory(ref key);
+        return ss;
     }
 
     public static bool TryAuth(string username, ref string password, SecureString b64Password, bool releasePassword = true)
     {
-        if (logonTryCount > 4)
+        if (_logonTryCount > 4)
         {
-            PossibleAttackDetected?.Invoke("AuthUtil static class", new LogonEventArgs(logonTryCount, DateTime.Now));
+            PossibleAttackDetected?.Invoke("AuthUtil static class", new LogonEventArgs(_logonTryCount, DateTime.Now));
         }
 
-        var pow = Math.Pow(2, logonTryCount * 2);
+        var pow = Math.Pow(2, _logonTryCount * 2);
         var responseTimeOut = int.Parse(pow.ToString());
         if (SecurityUtil.AreEquals(GenerateEncryptedPassword(username, ref password, releasePassword), b64Password))
         {
             SecurityUtil.ReleaseUnUsedResources();
             b64Password.Clear();
-            logonTryCount = 0;
+            _logonTryCount = 0;
             return true;
         }
 
-        logonTryCount++;
+        _logonTryCount++;
         Thread.Sleep(responseTimeOut);
         return false;
     }
 
     public static void CountLoginFail()
     {
-        logonTryCount++;
-        if (logonTryCount > 5)
+        _logonTryCount++;
+        if (_logonTryCount > 5)
         {
-            PossibleAttackDetected?.Invoke("AuthUtil static class", new LogonEventArgs(logonTryCount, DateTime.Now));
+            PossibleAttackDetected?.Invoke("AuthUtil static class", new LogonEventArgs(_logonTryCount, DateTime.Now));
         }
 
-        var pow = Math.Pow(2, logonTryCount * 2);
+        var pow = Math.Pow(2, _logonTryCount * 2);
         var responseTimeOut = int.Parse(pow.ToString());
         Thread.Sleep(responseTimeOut);
     }

@@ -1,6 +1,6 @@
 ﻿namespace MyDomainPasswordChange.Models;
 
-public class GroupModel
+public record GroupModel
 {
     public string AccountName { get; set; }
     public string DistinguishedName { get; set; }

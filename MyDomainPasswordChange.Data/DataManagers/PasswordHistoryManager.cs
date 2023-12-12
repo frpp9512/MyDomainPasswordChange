@@ -37,14 +37,16 @@ public class PasswordHistoryManager : IPasswordHistoryManager
     public async Task<bool> CheckPasswordHistoryAsync(string accountName, string password, int passwordHistoryCount)
     {
         var history = await LoadPasswordHistoryForUserAsync(accountName, passwordHistoryCount);
-        if (history is not null && history.Any())
+        if (history is null || !history.Any())
         {
-            foreach (var entry in history)
+            return false;
+        }
+
+        foreach (var entry in history)
+        {
+            if (YpSecurity.AuthUtil.TryAuth(accountName, ref password, YpSecurity.SecurityUtil.SecureString(entry.Password), false))
             {
-                if (YpSecurity.AuthUtil.TryAuth(accountName, ref password, YpSecurity.SecurityUtil.SecureString(entry.Password), false))
-                {
-                    return true;
-                }
+                return true;
             }
         }
 
@@ -53,18 +55,17 @@ public class PasswordHistoryManager : IPasswordHistoryManager
 
     private async Task<IEnumerable<PasswordHistoryEntry>> LoadPasswordHistoryForUserAsync(string accountName, int passwordHistoryCount)
     {
-        if (_dataContext.HistoryEntries.Any())
+        if (!_dataContext.HistoryEntries.Any())
         {
-            var results = await _dataContext.HistoryEntries
+            return null;
+        }
+
+        var results = await _dataContext.HistoryEntries
                                         .Where(e => e.AccountName == accountName)
                                         .OrderByDescending(e => e.Updated)
                                         .Take(passwordHistoryCount)
                                         .ToListAsync();
-
-            return results;
-        }
-
-        return null;
+        return results;
     }
 
     public async Task<bool> AccountHasEntries(string accountName)

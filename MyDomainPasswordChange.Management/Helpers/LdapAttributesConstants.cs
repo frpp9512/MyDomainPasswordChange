@@ -3,7 +3,7 @@
 /// <summary>
 /// A set of LDAP attributes names.
 /// </summary>
-public static class LdapAttributes
+public static class LdapAttributesConstants
 {
     public static readonly string GUID = "objectGUID";
     public static readonly string COMPANY = "company";
