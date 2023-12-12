@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MyDomainPasswordChange.Management.Interfaces;
 using MyDomainPasswordChange.Management.Managers;
+using MyDomainPasswordChange.Management.Models;
 using PasswordExpirationCheckService.Services;
 
 namespace PasswordExpirationCheckService;
@@ -16,7 +17,8 @@ public class Program
             .UseWindowsService(configure => configure.ServiceName = "PasswordExpirationCheck")
             .ConfigureServices((hostContext, services) =>
             {
-                _ = services.AddTransient<IBindCredentialsProvider>(services => new BindCredentialsProvider(services.GetService<IConfiguration>()));
+                var config = services.BuildServiceProvider().GetService<IConfiguration>();
+                _ = services.Configure<LdapConnectionConfiguration>(config.GetSection("LdapConnectionConfiguration"));
                 _ = services.AddTransient<MyDomainPasswordManagement>();
                 _ = services.AddTransient<IMailSettingsProvider, MailSettingsProvider>();
                 _ = services.AddSingleton<IMyMailService, MyMailService>();

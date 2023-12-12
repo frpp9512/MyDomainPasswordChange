@@ -88,5 +88,5 @@ public record Account
     /// <summary>
     /// The set of Security Groups which the user belongs to.
     /// </summary>
-    public List<GroupInfoDto> Groups { get; set; } = [];
+    public List<Group> Groups { get; set; } = [];
 }

@@ -30,7 +30,6 @@ public class Startup(IConfiguration configuration)
         _ = services.AddSingleton<IIpAddressBlacklist, IpAddressBlacklist>();
         _ = services.AddSingleton<IAlertCountingManagement, AlertCountingManagement>();
         _ = services.AddScoped<BlacklistFilter>();
-
         _ = services.AddLogging();
         _ = services.AddAuthentication("CookieAuth")
             .AddCookie("CookieAuth", config =>

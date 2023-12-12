@@ -1,4 +1,5 @@
-﻿using MyDomainPasswordChange.Management.Excepetions;
+﻿using Microsoft.Extensions.Options;
+using MyDomainPasswordChange.Management.Excepetions;
 using MyDomainPasswordChange.Management.Helpers;
 using MyDomainPasswordChange.Management.Interfaces;
 using MyDomainPasswordChange.Management.Models;
@@ -15,15 +16,13 @@ namespace MyDomainPasswordChange.Management.Managers;
 /// <summary>
 /// Manages the LDAP user accounts for getting information and changing passwords.
 /// </summary>
-public class MyDomainPasswordManagement : IDomainPasswordManagement
+/// <remarks>
+/// Creates a new instance of <see cref="MyDomainPasswordManagement"/>.
+/// </remarks>
+/// <param name="credentialsProvider">The implementation of <see cref="IBindCredentialsProvider"/> to access the bind credential info.</param>
+public class MyDomainPasswordManagement(IOptions<LdapConnectionConfiguration> connectionOptions) : IDomainPasswordManagement
 {
-    private readonly IBindCredentialsProvider _credentialsProvider;
-
-    /// <summary>
-    /// Creates a new instance of <see cref="MyDomainPasswordManagement"/>.
-    /// </summary>
-    /// <param name="credentialsProvider">The implementation of <see cref="IBindCredentialsProvider"/> to access the bind credential info.</param>
-    public MyDomainPasswordManagement(IBindCredentialsProvider credentialsProvider) => _credentialsProvider = credentialsProvider;
+    private readonly LdapConnectionConfiguration _connectionOptions = connectionOptions.Value;
 
     public async Task<bool> CreateNewUserAsync(UserInfo userInfo, string password, string dependencyOU, string areaOU, params string[] groups)
     {
@@ -32,6 +31,7 @@ public class MyDomainPasswordManagement : IDomainPasswordManagement
         // Create the user.
         var userPrincipal = new UserPrincipal(context, userInfo.AccountName, password, userInfo.Enabled)
         {
+            Name = userInfo.DisplayName,
             DisplayName = userInfo.DisplayName,
             EmailAddress = userInfo.Email,
             Description = userInfo.Description,
@@ -102,6 +102,13 @@ public class MyDomainPasswordManagement : IDomainPasswordManagement
         return true;
     }
 
+    public void DeleteAccount(string accountName)
+    {
+        using var context = GetPrincipalContext();
+        var userPrincipal = GetUserPrincipal(context, accountName) ?? throw new UserNotFoundException($"The user {accountName} is not registered in the domain.");
+        userPrincipal.Delete();
+    }
+
     /// <summary>
     /// Authenticates the specified user credentials.
     /// </summary>
@@ -111,14 +118,14 @@ public class MyDomainPasswordManagement : IDomainPasswordManagement
     public bool AuthenticateUser(string accountName, string password)
     {
         var context = GenerateContext();
-        return context.ValidateCredentials(accountName, password, ContextOptions.ServerBind);
+        return context.ValidateCredentials(accountName, password);
     }
 
     private PrincipalContext GenerateContext() => new(ContextType.Domain,
-                                               _credentialsProvider.GetLdapServer(),
-                                               _credentialsProvider.GetLdapSearchBase(),
-                                               _credentialsProvider.GetBindUsername(),
-                                               _credentialsProvider.GetBindPassword());
+                                               _connectionOptions.LdapServer,
+                                               _connectionOptions.LdapSearchBase,
+                                               _connectionOptions.LdapBindUsername,
+                                               _connectionOptions.LdapBindPassword);
     /// <summary>
     /// Determines if exists an user account with the provided name.
     /// </summary>
@@ -193,18 +200,18 @@ public class MyDomainPasswordManagement : IDomainPasswordManagement
     /// </summary>
     /// <returns></returns>
     private PrincipalContext GetPrincipalContext() => new(ContextType.Domain,
-                                                            _credentialsProvider.GetLdapServer(),
-                                                            _credentialsProvider.GetLdapSearchBase(),
-                                                            _credentialsProvider.GetBindUsername(),
-                                                            _credentialsProvider.GetBindPassword());
+                                                            _connectionOptions.LdapServer,
+                                                            _connectionOptions.LdapSearchBase,
+                                                            _connectionOptions.LdapBindUsername,
+                                                            _connectionOptions.LdapBindPassword);
 
     /// <summary>
     /// Get the directory entry with the configured credentials.
     /// </summary>
     /// <returns></returns>
-    private DirectoryEntry GetDirectoryEntry() => new($"LDAP://{_credentialsProvider.GetLdapServer()}",
-                                                        _credentialsProvider.GetBindUsername(),
-                                                        _credentialsProvider.GetBindPassword());
+    private DirectoryEntry GetDirectoryEntry() => new($"LDAP://{_connectionOptions.LdapServer}",
+                                                        _connectionOptions.LdapBindUsername,
+                                                        _connectionOptions.LdapBindPassword);
 
     /// <summary>
     /// Gets the LDAP user info with the specified account name.
@@ -386,7 +393,7 @@ public class MyDomainPasswordManagement : IDomainPasswordManagement
             Filter = $"{LdapAttributesConstants.ACCOUNT_NAME}={accountName}"
         };
 
-        var results = await Task.Run(searcher.FindOne);
+        var results = await Task.Run(searcher.FindOne) ?? throw new UserNotFoundException("Entry not found for {accountName}.");
         var userEntry = results.GetDirectoryEntry();
 
         return userEntry.Properties[LdapAttributesConstants.JPEG_PHOTO].Value != null
