@@ -3,9 +3,9 @@ using System.Linq;
 
 namespace MyDomainPasswordChange.Models;
 
-public class UsersManagementViewModel
+public record UsersManagementViewModel
 {
-    public List<DependencyGroupViewModel> Groups { get; set; } = new List<DependencyGroupViewModel>();
+    public List<DependencyGroupViewModel> Groups { get; set; } = [];
 
     public int TotalUsers => Groups.Sum(g => g.Users.Count);
 

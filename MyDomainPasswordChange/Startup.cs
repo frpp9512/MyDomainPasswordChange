@@ -13,16 +13,14 @@ using MyDomainPasswordChange.Managers.Services;
 
 namespace MyDomainPasswordChange;
 
-public class Startup
+public class Startup(IConfiguration configuration)
 {
-    public Startup(IConfiguration configuration) => Configuration = configuration;
-
-    public IConfiguration Configuration { get; }
+    public IConfiguration Configuration { get; } = configuration;
 
     // This method gets called by the runtime. Use this method to add services to the container.
     public void ConfigureServices(IServiceCollection services)
     {
-        services.AddAutoMapper(typeof(Startup));
+        _ = services.AddAutoMapper(typeof(Startup));
         _ = services.AddHttpContextAccessor();
         _ = services.AddSqliteDataContext()
                 .AddPasswordHistoryManager();
@@ -32,7 +30,6 @@ public class Startup
         _ = services.AddSingleton<IIpAddressBlacklist, IpAddressBlacklist>();
         _ = services.AddSingleton<IAlertCountingManagement, AlertCountingManagement>();
         _ = services.AddScoped<BlacklistFilter>();
-
         _ = services.AddLogging();
         _ = services.AddAuthentication("CookieAuth")
             .AddCookie("CookieAuth", config =>
@@ -42,7 +39,6 @@ public class Startup
                 config.LogoutPath = "/Auth/Logout";
                 config.AccessDeniedPath = "/Auth/AccessDenied";
             });
-        //services.AddAutoMapper(typeof(Startup).Assembly);
         _ = services.AddTransient<IDependenciesGroupsManagement, DependenciesGroupsManagement>();
         _ = services.AddControllersWithViews();
     }

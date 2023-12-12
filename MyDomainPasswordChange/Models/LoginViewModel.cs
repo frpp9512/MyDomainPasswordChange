@@ -2,7 +2,7 @@
 
 namespace MyDomainPasswordChange.Models;
 
-public class LoginViewModel
+public record LoginViewModel
 {
     [Required]
     [Display(Name = "Nombre de usuario")]

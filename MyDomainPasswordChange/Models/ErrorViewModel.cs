@@ -1,6 +1,6 @@
 namespace MyDomainPasswordChange.Models;
 
-public class ErrorViewModel
+public record ErrorViewModel
 {
     public string RequestId { get; set; }
 

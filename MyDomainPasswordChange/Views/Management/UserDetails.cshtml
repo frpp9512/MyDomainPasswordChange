@@ -1,0 +1,157 @@
+﻿@model MyDomainPasswordChange.Models.UserViewModel
+
+@{
+    ViewData["Title"] = "Detalles de usuario";
+}
+
+<main role="main">
+    <div class="container">
+
+        <div class="mb-3">
+            <a asp-action="Index"><span class="fa fa-arrow-circle-left"></span> Regresar a la administración</a>
+        </div>
+
+        <h3>Detalles del usuario</h3>
+
+        <div>
+            <h4>Usuario de dominio</h4>
+            <hr />
+            <dl class="row">
+                <dt class="col-sm-2">
+                    @Html.DisplayNameFor(model => model.AccountName)
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.AccountName)
+                </dd>
+                <dt class="col-sm-2">
+                    @Html.DisplayNameFor(model => model.FirstName)
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.FirstName)
+                </dd>
+                <dt class="col-sm-2">
+                    @Html.DisplayNameFor(model => model.LastName)
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.LastName)
+                </dd>
+                <dt class="col-sm-2">
+                    @Html.DisplayNameFor(model => model.JobTitle)
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.JobTitle)
+                </dd>
+                <dt class="col-sm-2">
+                    @Html.DisplayNameFor(model => model.Email)
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.Email)
+                </dd>
+                <dt class="col-sm-2">
+                    @Html.DisplayNameFor(model => model.PersonalId)
+                </dt>
+                <dd class="col-sm-10">
+                    @if (!string.IsNullOrEmpty(Model.PersonalId))
+                    {
+                        @Html.DisplayFor(model => model.PersonalId)
+                    }
+                    else
+                    {
+                        <span>-</span>
+                    }
+                </dd>
+                <dt class="col-sm-2">
+                    @Html.DisplayNameFor(model => model.Office)
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.Office)
+                </dd>
+                <dt class="col-sm-2">
+                    @Html.DisplayNameFor(model => model.Address)
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.Address)
+                </dd>
+                <dt class="col-sm-2">
+                    @Html.DisplayNameFor(model => model.MailboxCapacity)
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.MailboxCapacity)
+                </dd>
+                <dt class="col-sm-2">
+                    @Html.DisplayNameFor(model => model.AllowedWorkstations)
+                    <span class="fa fa-laptop"></span>
+                </dt>
+                <dd class="col-sm-10">
+                    @if (Model.AllowedWorkstations.Any())
+                    {
+                        foreach (var workstation in Model.AllowedWorkstations)
+                        {
+                            <span class="badge badge-dark">@workstation</span>
+                        }
+                    }
+                    else
+                    {
+                        <span class="badge badge-danger">TODAS</span>
+                    }
+                </dd>
+                <dt class="col-sm-2">
+                    @Html.DisplayNameFor(model => model.InternetAccess)
+                </dt>
+                <dd class="col-sm-10">
+                    @switch (Model.InternetAccess)
+                    {
+                        case InternetAccess.Full:
+                            <span>Completo <span class="fa fa-globe text-success"></span></span>
+                            break;
+                        case InternetAccess.Restricted:
+                            <span>Completo con restricciones <span class="fa fa-globe text-warning"></span></span>
+                            break;
+                        case InternetAccess.National:
+                            <span>Nacional <span class="fa fa-globe text-dark"></span></span>
+                            break;
+                        default:
+                            <span>No tiene <span class="fa fa-times"></span></span>
+                            break;
+                    }
+                </dd>
+                <dt class="col-sm-2">
+                    @Html.DisplayNameFor(model => model.Enabled)
+                </dt>
+                <dd class="col-sm-10">
+                    @if (Model.Enabled)
+                    {
+                        <span class="fa fa-check text-success" title="Usuario habilitado"></span>
+                    }
+                    else
+                    {
+                        <span class="fa fa-times text-danger" title="Usuario deshabilitado"></span>
+                    }
+                </dd>
+            </dl>
+        </div>
+        @if (Model.Groups is not null)
+        {
+            <h4>Grupos a los que pertenece en el dominio</h4>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Grupo</th>
+                            <th>Descripción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var group in Model.Groups)
+                        {
+                            <tr>
+                                <td>@group.AccountName</td>
+                                <td>@group.Description</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</main>

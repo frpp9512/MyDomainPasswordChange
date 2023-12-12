@@ -7,20 +7,19 @@ namespace MyDomainPasswordChange.Managers.Services;
 
 public class CounterManager : ICounterManager
 {
-    private readonly List<Counter> _counters = new();
+    private readonly List<Counter> _counters = [];
 
     public void AddCounter(string key, string description = "")
     {
-        if (_counters.Any(c => c.Key == key))
-        {
-            var counter = _counters.FirstOrDefault(c => c.Key == key);
-            counter.Description = description;
-            counter.Reset();
-        }
-        else
+        if (!_counters.Any(c => c.Key == key))
         {
             _counters.Add(new Counter { Key = key, Description = description });
+            return;
         }
+
+        var counter = _counters.FirstOrDefault(c => c.Key == key);
+        counter.Description = description;
+        counter.Reset();
     }
 
     public bool ExistCounter(string counterKey) => _counters.Any(c => c.Key == counterKey);
@@ -31,12 +30,11 @@ public class CounterManager : ICounterManager
         {
             var counter = _counters.FirstOrDefault(c => c.Key == counterKey);
             counter.Count();
+            return;
         }
-        else
-        {
-            AddCounter(counterKey);
-            Count(counterKey);
-        }
+
+        AddCounter(counterKey);
+        Count(counterKey);
     }
 
     public uint GetCounterValue(string counterKey)
@@ -59,86 +57,77 @@ public class CounterManager : ICounterManager
             var counter = _counters.FirstOrDefault(c => c.Key == counterKey);
             counter.Reset();
         }
-        else
-        {
-            throw new KeyNotFoundException("El contador espeficado no existe.");
-        }
+
+        throw new KeyNotFoundException("El contador espeficado no existe.");
     }
 
     public void SetCounterAlarm(string counterKey, uint alarmValue, Action<string, uint> alarmCallback)
     {
-        if (_counters.Any(c => c.Key == counterKey))
-        {
-            var counter = _counters.FirstOrDefault(c => c.Key == counterKey);
-            if (counter.Alarm is not null)
-            {
-                counter.Alarm.AlarmValue = alarmValue;
-            }
-            else
-            {
-                counter.Alarm = new CounterAlarm
-                {
-                    AlarmValue = alarmValue,
-                    AlarmCallback = alarmCallback
-                };
-            }
-        }
-        else
+        if (!_counters.Any(c => c.Key == counterKey))
         {
             throw new KeyNotFoundException("El contador espeficado no existe.");
         }
+
+        var counter = _counters.FirstOrDefault(c => c.Key == counterKey);
+        if (counter.Alarm is not null)
+        {
+            counter.Alarm.AlarmValue = alarmValue;
+            return;
+        }
+
+        counter.Alarm = new CounterAlarm
+        {
+            AlarmValue = alarmValue,
+            AlarmCallback = alarmCallback
+        };
     }
 
     public bool IsCounterAlarming(string counterKey)
     {
-        if (_counters.Any(c => c.Key == counterKey))
-        {
-            var counter = _counters.FirstOrDefault(c => c.Key == counterKey);
-            return counter.Alarm is not null && counter.Alarming;
-        }
-        else
+        if (!_counters.Any(c => c.Key == counterKey))
         {
             throw new KeyNotFoundException("El contador espeficado no existe.");
         }
+
+        var counter = _counters.FirstOrDefault(c => c.Key == counterKey);
+        return counter.Alarm is not null && counter.Alarming;
     }
 
     public void RemoveCounter(string counterKey)
     {
-        if (_counters.Any(c => c.Key == counterKey))
+        if (!_counters.Any(c => c.Key == counterKey))
         {
-            var counter = _counters.FirstOrDefault(c => c.Key == counterKey);
-            _ = _counters.Remove(counter);
+            return;
         }
+
+        var counter = _counters.FirstOrDefault(c => c.Key == counterKey);
+        _ = _counters.Remove(counter);
     }
 
     public void RemoveAllCounters() => _counters.Clear();
 
     public DateTime GetCounterLastCount(string counterKey)
     {
-        if (_counters.Any(c => c.Key == counterKey))
-        {
-            var counter = _counters.FirstOrDefault(c => c.Key == counterKey);
-            return counter.LastCount;
-        }
-        else
+        if (!_counters.Any(c => c.Key == counterKey))
         {
             return DateTime.MinValue;
         }
+
+        var counter = _counters.FirstOrDefault(c => c.Key == counterKey);
+        return counter.LastCount;
     }
 
     public bool HasCounted(string counterKey) => _counters.Any(c => c.HasCounted);
 
     public bool HasAlarm(string counterKey)
     {
-        if (_counters.Any(c => c.Key == counterKey))
-        {
-            var counter = _counters.FirstOrDefault(c => c.Key == counterKey);
-            return counter.HasAlarm;
-        }
-        else
+        if (!_counters.Any(c => c.Key == counterKey))
         {
             throw new KeyNotFoundException("El contador espeficado no existe.");
         }
+
+        var counter = _counters.FirstOrDefault(c => c.Key == counterKey);
+        return counter.HasAlarm;
     }
 }
 
@@ -175,4 +164,3 @@ internal class CounterAlarm
     public uint AlarmValue { get; set; }
     public Action<string, uint> AlarmCallback { get; set; }
 }
-

@@ -1,6 +1,6 @@
 ﻿namespace MyDomainPasswordChange.Managers.Models;
 
-public class DependencyDeclaration
+public record DependencyDeclaration
 {
     /// <summary>
     /// Defines the type of the group, "global" for general access, "dependency" for specific.

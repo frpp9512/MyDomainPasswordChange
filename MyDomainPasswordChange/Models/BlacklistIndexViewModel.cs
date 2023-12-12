@@ -2,7 +2,7 @@
 
 namespace MyDomainPasswordChange.Models;
 
-public class BlacklistIndexViewModel
+public record BlacklistIndexViewModel
 {
     public IEnumerable<BlacklistedIpViewModel> BlacklistedIpAddresses { get; set; }
 }

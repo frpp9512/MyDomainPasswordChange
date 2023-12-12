@@ -7,7 +7,7 @@ namespace MyDomainPasswordChange.Management.Models;
 /// <summary>
 /// Represents the general info of a LDAP User object.
 /// </summary>
-public class UserInfo
+public record UserInfo
 {
     /// <summary>
     /// The account name (sAMAccountName) of the user.
@@ -72,7 +72,7 @@ public class UserInfo
     /// <summary>
     /// Defines the workstations that the user is allowed to login to.
     /// </summary>
-    public List<string> AllowedWorkstations { get; set; } = new List<string> { "NONE" };
+    public List<string> AllowedWorkstations { get; set; } = ["NONE"];
 
     /// <summary>
     /// Defines the size of the user mail inbox.
@@ -92,5 +92,5 @@ public class UserInfo
     /// <summary>
     /// The set of Security Groups which the user belongs to.
     /// </summary>
-    public List<GroupInfo> Groups { get; set; } = new List<GroupInfo>();
+    public List<GroupInfo> Groups { get; set; } = [];
 }

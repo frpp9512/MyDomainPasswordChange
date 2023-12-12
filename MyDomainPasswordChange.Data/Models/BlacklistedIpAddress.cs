@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace MyDomainPasswordChange.Data.Models;
 
-public class BlacklistedIpAddress
+public record BlacklistedIpAddress
 {
     [Key]
     public Guid Id { get; set; }

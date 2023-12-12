@@ -9,30 +9,21 @@ using System.Threading.Tasks;
 
 namespace MyDomainPasswordChange.Managers.Services;
 
-public class MailNotificator : IMailNotificator
+public class MailNotificator(IMyMailService mailService,
+                             IConfiguration configuration,
+                             IWebHostEnvironment webHostEnvironment,
+                             IHttpContextAccessor httpContextAccessor,
+                             IDomainPasswordManagement passwordManagement) : IMailNotificator
 {
-    private readonly IMyMailService _mailService;
-    private readonly IConfiguration _configuration;
-    private readonly IWebHostEnvironment _webHostEnvironment;
-    private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly IDomainPasswordManagement _passwordManagement;
+    private readonly IMyMailService _mailService = mailService;
+    private readonly IConfiguration _configuration = configuration;
+    private readonly IWebHostEnvironment _webHostEnvironment = webHostEnvironment;
+    private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
+    private readonly IDomainPasswordManagement _passwordManagement = passwordManagement;
 
     private string AdminEmail => _configuration.GetValue<string>("adminEmail");
     private int PasswordExpirationDays => _configuration.GetValue<int>("passwordExpirationDays");
     private HttpContext HttpContext => _httpContextAccessor.HttpContext;
-
-    public MailNotificator(IMyMailService mailService,
-                           IConfiguration configuration,
-                           IWebHostEnvironment webHostEnvironment,
-                           IHttpContextAccessor httpContextAccessor,
-                           IDomainPasswordManagement passwordManagement)
-    {
-        _mailService = mailService;
-        _configuration = configuration;
-        _webHostEnvironment = webHostEnvironment;
-        _httpContextAccessor = httpContextAccessor;
-        _passwordManagement = passwordManagement;
-    }
 
     public async Task SendChangePasswordAlertAsync(string accountName)
     {
@@ -50,15 +41,17 @@ public class MailNotificator : IMailNotificator
     public async Task SendChangePasswordNotificationAsync(string accountName)
     {
         var user = await _passwordManagement.GetUserInfo(accountName);
-        if (!string.IsNullOrEmpty(user.Email))
+        if (string.IsNullOrEmpty(user.Email))
         {
-            await _mailService.SendMailAsync(new MailRequest
-            {
-                Body = GetNotificationMailTemplate(user.DisplayName, PasswordExpirationDays),
-                MailTo = user.Email,
-                Subject = "Notificación - Cambio de contraseña"
-            });
+            return;
         }
+
+        await _mailService.SendMailAsync(new MailRequest
+        {
+            Body = GetNotificationMailTemplate(user.DisplayName, PasswordExpirationDays),
+            MailTo = user.Email,
+            Subject = "Notificación - Cambio de contraseña"
+        });
     }
 
     public async Task SendChallengeAlertAsync() => await _mailService.SendMailAsync(new MailRequest

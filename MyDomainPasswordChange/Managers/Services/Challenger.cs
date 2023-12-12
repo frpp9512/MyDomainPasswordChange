@@ -30,7 +30,7 @@ public class Challenger : IChallenger
             : !_challenges.Any(c => c.Id == challengeId)
                 ? throw new Exception("El challenge especificado no existe.")
                 : !string.IsNullOrEmpty(answer)
-&& _challenges.First(c => c.Id == challengeId).Answer.ToLower() == answer.ToLower();
+                  && _challenges.First(c => c.Id == challengeId).Answer.Equals(answer, StringComparison.CurrentCultureIgnoreCase);
 
     public int GetChallenge()
     {

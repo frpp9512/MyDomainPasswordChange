@@ -1,4 +1,5 @@
-﻿using MyDomainPasswordChange.Management.Excepetions;
+﻿using Microsoft.Extensions.Options;
+using MyDomainPasswordChange.Management.Excepetions;
 using MyDomainPasswordChange.Management.Helpers;
 using MyDomainPasswordChange.Management.Interfaces;
 using MyDomainPasswordChange.Management.Models;
@@ -15,23 +16,22 @@ namespace MyDomainPasswordChange.Management.Managers;
 /// <summary>
 /// Manages the LDAP user accounts for getting information and changing passwords.
 /// </summary>
-public class MyDomainPasswordManagement : IDomainPasswordManagement
+/// <remarks>
+/// Creates a new instance of <see cref="MyDomainPasswordManagement"/>.
+/// </remarks>
+/// <param name="credentialsProvider">The implementation of <see cref="IBindCredentialsProvider"/> to access the bind credential info.</param>
+public class MyDomainPasswordManagement(IOptions<LdapConnectionConfiguration> connectionOptions) : IDomainPasswordManagement
 {
-    private readonly IBindCredentialsProvider _credentialsProvider;
+    private readonly LdapConnectionConfiguration _connectionOptions = connectionOptions.Value;
 
-    /// <summary>
-    /// Creates a new instance of <see cref="MyDomainPasswordManagement"/>.
-    /// </summary>
-    /// <param name="credentialsProvider">The implementation of <see cref="IBindCredentialsProvider"/> to access the bind credential info.</param>
-    public MyDomainPasswordManagement(IBindCredentialsProvider credentialsProvider) => _credentialsProvider = credentialsProvider;
-
-    public async Task<bool> CreateNewUserAsync(UserInfo userInfo, string password, string dependecyOU, string areaOU, params string[] groups)
+    public async Task<bool> CreateNewUserAsync(UserInfo userInfo, string password, string dependencyOU, string areaOU, params string[] groups)
     {
         var context = GenerateContext();
 
         // Create the user.
         var userPrincipal = new UserPrincipal(context, userInfo.AccountName, password, userInfo.Enabled)
         {
+            Name = userInfo.DisplayName,
             DisplayName = userInfo.DisplayName,
             EmailAddress = userInfo.Email,
             Description = userInfo.Description,
@@ -41,6 +41,7 @@ public class MyDomainPasswordManagement : IDomainPasswordManagement
         {
             userPrincipal.PermittedWorkstations.Add(workstation);
         }
+
         userPrincipal.Save();
 
         // Assign it to the groups.
@@ -51,6 +52,7 @@ public class MyDomainPasswordManagement : IDomainPasswordManagement
             {
                 continue;
             }
+
             groupPrincipal.Members.Add(userPrincipal);
             groupPrincipal.Save();
         }
@@ -59,26 +61,26 @@ public class MyDomainPasswordManagement : IDomainPasswordManagement
         using var directoryEntry = GetDirectoryEntry();
         var userSearcher = new DirectorySearcher(directoryEntry)
         {
-            Filter = $"{LdapAttributes.ACCOUNT_NAME}={userPrincipal.SamAccountName}"
+            Filter = $"{LdapAttributesConstants.ACCOUNT_NAME}={userPrincipal.SamAccountName}"
         };
 
         var userResult = await Task.Run(userSearcher.FindOne);
         var userEntry = userResult.GetDirectoryEntry();
 
         // Setting the other values.
-        userEntry.Properties[LdapAttributes.GIVEN_NAME].Value = userInfo.FirstName;
-        userEntry.Properties[LdapAttributes.SURNAME].Value = userInfo.LastName;
-        userEntry.Properties[LdapAttributes.PO_BOX].Value = userInfo.MailboxCapacity;
-        userEntry.Properties[LdapAttributes.GID_NUMBER].Value = userInfo.PersonalId;
-        userEntry.Properties[LdapAttributes.ADDRESS].Value = userInfo.Address;
-        userEntry.Properties[LdapAttributes.TITLE].Value = userInfo.JobTitle;
-        userEntry.Properties[LdapAttributes.OFFICE].Value = userInfo.Office;
+        userEntry.Properties[LdapAttributesConstants.GIVEN_NAME].Value = userInfo.FirstName;
+        userEntry.Properties[LdapAttributesConstants.SURNAME].Value = userInfo.LastName;
+        userEntry.Properties[LdapAttributesConstants.PO_BOX].Value = userInfo.MailboxCapacity;
+        userEntry.Properties[LdapAttributesConstants.GID_NUMBER].Value = userInfo.PersonalId;
+        userEntry.Properties[LdapAttributesConstants.ADDRESS].Value = userInfo.Address;
+        userEntry.Properties[LdapAttributesConstants.TITLE].Value = userInfo.JobTitle;
+        userEntry.Properties[LdapAttributesConstants.OFFICE].Value = userInfo.Office;
         userEntry.CommitChanges();
 
         // Finding Dependency OU
         var dependencyOUSearcher = new DirectorySearcher(directoryEntry)
         {
-            Filter = $"(&(objectClass=organizationalUnit)(name={dependecyOU}))",
+            Filter = $"(&(objectClass=organizationalUnit)(name={dependencyOU}))",
             SearchScope = SearchScope.Subtree,
         };
         var dependencyOUResult = await Task.Run(dependencyOUSearcher.FindOne);
@@ -100,6 +102,13 @@ public class MyDomainPasswordManagement : IDomainPasswordManagement
         return true;
     }
 
+    public void DeleteAccount(string accountName)
+    {
+        using var context = GetPrincipalContext();
+        var userPrincipal = GetUserPrincipal(context, accountName) ?? throw new UserNotFoundException($"The user {accountName} is not registered in the domain.");
+        userPrincipal.Delete();
+    }
+
     /// <summary>
     /// Authenticates the specified user credentials.
     /// </summary>
@@ -109,14 +118,14 @@ public class MyDomainPasswordManagement : IDomainPasswordManagement
     public bool AuthenticateUser(string accountName, string password)
     {
         var context = GenerateContext();
-        return context.ValidateCredentials(accountName, password, ContextOptions.ServerBind);
+        return context.ValidateCredentials(accountName, password);
     }
 
-    private PrincipalContext GenerateContext() => new PrincipalContext(ContextType.Domain,
-                                               _credentialsProvider.GetLdapServer(),
-                                               _credentialsProvider.GetLdapSearchBase(),
-                                               _credentialsProvider.GetBindUsername(),
-                                               _credentialsProvider.GetBindPassword());
+    private PrincipalContext GenerateContext() => new(ContextType.Domain,
+                                               _connectionOptions.LdapServer,
+                                               _connectionOptions.LdapSearchBase,
+                                               _connectionOptions.LdapBindUsername,
+                                               _connectionOptions.LdapBindPassword);
     /// <summary>
     /// Determines if exists an user account with the provided name.
     /// </summary>
@@ -191,18 +200,18 @@ public class MyDomainPasswordManagement : IDomainPasswordManagement
     /// </summary>
     /// <returns></returns>
     private PrincipalContext GetPrincipalContext() => new(ContextType.Domain,
-                                                            _credentialsProvider.GetLdapServer(),
-                                                            _credentialsProvider.GetLdapSearchBase(),
-                                                            _credentialsProvider.GetBindUsername(),
-                                                            _credentialsProvider.GetBindPassword());
+                                                            _connectionOptions.LdapServer,
+                                                            _connectionOptions.LdapSearchBase,
+                                                            _connectionOptions.LdapBindUsername,
+                                                            _connectionOptions.LdapBindPassword);
 
     /// <summary>
     /// Get the directory entry with the configured credentials.
     /// </summary>
     /// <returns></returns>
-    private DirectoryEntry GetDirectoryEntry() => new($"LDAP://{_credentialsProvider.GetLdapServer()}",
-                                                        _credentialsProvider.GetBindUsername(),
-                                                        _credentialsProvider.GetBindPassword());
+    private DirectoryEntry GetDirectoryEntry() => new($"LDAP://{_connectionOptions.LdapServer}",
+                                                        _connectionOptions.LdapBindUsername,
+                                                        _connectionOptions.LdapBindPassword);
 
     /// <summary>
     /// Gets the LDAP user info with the specified account name.
@@ -215,7 +224,6 @@ public class MyDomainPasswordManagement : IDomainPasswordManagement
         var userPrincipal = GetUserPrincipal(context, accountName) ?? throw new UserNotFoundException($"The user {accountName} is not registered in the domain.");
 
         var info = await GetUserInfoFromPrincipal(userPrincipal, true);
-
         return info;
     }
 
@@ -302,27 +310,27 @@ public class MyDomainPasswordManagement : IDomainPasswordManagement
             LastPasswordSet = principal.LastPasswordSet.GetValueOrDefault(),
             Enabled = principal.Enabled.GetValueOrDefault(),
             PasswordNeverExpires = principal.PasswordNeverExpires,
-            AllowedWorkstations = principal.PermittedWorkstations.ToList()
+            AllowedWorkstations = [.. principal.PermittedWorkstations]
         };
 
         // Move it to the organizational unit.
         using var directoryEntry = GetDirectoryEntry();
         var userSearcher = new DirectorySearcher(directoryEntry)
         {
-            Filter = $"{LdapAttributes.ACCOUNT_NAME}={userInfo.AccountName}"
+            Filter = $"{LdapAttributesConstants.ACCOUNT_NAME}={userInfo.AccountName}"
         };
 
         var userResult = await Task.Run(userSearcher.FindOne);
         var userEntry = userResult.GetDirectoryEntry();
 
         // Setting the other values.
-        userInfo.FirstName = userEntry.Properties[LdapAttributes.GIVEN_NAME].Value?.ToString() ?? "";
-        userInfo.LastName = userEntry.Properties[LdapAttributes.SURNAME].Value?.ToString() ?? "";
-        userInfo.MailboxCapacity = userEntry.Properties[LdapAttributes.PO_BOX].Value?.ToString() ?? "";
-        userInfo.PersonalId = userEntry.Properties[LdapAttributes.GID_NUMBER].Value?.ToString() ?? "";
-        userInfo.Address = userEntry.Properties[LdapAttributes.ADDRESS].Value?.ToString() ?? "";
-        userInfo.JobTitle = userEntry.Properties[LdapAttributes.TITLE].Value?.ToString() ?? "";
-        userInfo.Office = userEntry.Properties[LdapAttributes.OFFICE].Value?.ToString() ?? "";
+        userInfo.FirstName = userEntry.Properties[LdapAttributesConstants.GIVEN_NAME].Value?.ToString() ?? "";
+        userInfo.LastName = userEntry.Properties[LdapAttributesConstants.SURNAME].Value?.ToString() ?? "";
+        userInfo.MailboxCapacity = userEntry.Properties[LdapAttributesConstants.PO_BOX].Value?.ToString() ?? "";
+        userInfo.PersonalId = userEntry.Properties[LdapAttributesConstants.GID_NUMBER].Value?.ToString() ?? "";
+        userInfo.Address = userEntry.Properties[LdapAttributesConstants.ADDRESS].Value?.ToString() ?? "";
+        userInfo.JobTitle = userEntry.Properties[LdapAttributesConstants.TITLE].Value?.ToString() ?? "";
+        userInfo.Office = userEntry.Properties[LdapAttributesConstants.OFFICE].Value?.ToString() ?? "";
 
         if (!loadGroups)
         {
@@ -354,22 +362,22 @@ public class MyDomainPasswordManagement : IDomainPasswordManagement
         using var entry = GetDirectoryEntry();
         var searcher = new DirectorySearcher(entry)
         {
-            Filter = $"{LdapAttributes.ACCOUNT_NAME}={accountName}"
+            Filter = $"{LdapAttributesConstants.ACCOUNT_NAME}={accountName}"
         };
 
         var results = await Task.Run(searcher.FindOne);
         var userEntry = results.GetDirectoryEntry();
 
-        if (userEntry.Properties[LdapAttributes.JPEG_PHOTO].Value != null)
+        if (userEntry.Properties[LdapAttributesConstants.JPEG_PHOTO].Value == null)
         {
-            var photo = userEntry.Properties[LdapAttributes.JPEG_PHOTO].Value as byte[];
-            var ms = new MemoryStream(photo);
-            var image = Image.FromStream(ms);
-
-            return image;
+            return null;
         }
 
-        return null;
+        var photo = userEntry.Properties[LdapAttributesConstants.JPEG_PHOTO].Value as byte[];
+        var ms = new MemoryStream(photo);
+        var image = Image.FromStream(ms);
+
+        return image;
     }
 
     /// <summary>
@@ -382,14 +390,14 @@ public class MyDomainPasswordManagement : IDomainPasswordManagement
         using var entry = GetDirectoryEntry();
         var searcher = new DirectorySearcher(entry)
         {
-            Filter = $"{LdapAttributes.ACCOUNT_NAME}={accountName}"
+            Filter = $"{LdapAttributesConstants.ACCOUNT_NAME}={accountName}"
         };
 
-        var results = await Task.Run(searcher.FindOne);
+        var results = await Task.Run(searcher.FindOne) ?? throw new UserNotFoundException("Entry not found for {accountName}.");
         var userEntry = results.GetDirectoryEntry();
 
-        return userEntry.Properties[LdapAttributes.JPEG_PHOTO].Value != null
-            ? userEntry.Properties[LdapAttributes.JPEG_PHOTO].Value as byte[]
+        return userEntry.Properties[LdapAttributesConstants.JPEG_PHOTO].Value != null
+            ? userEntry.Properties[LdapAttributesConstants.JPEG_PHOTO].Value as byte[]
             : null;
     }
 

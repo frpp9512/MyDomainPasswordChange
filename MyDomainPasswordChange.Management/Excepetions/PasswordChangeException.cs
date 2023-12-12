@@ -12,4 +12,8 @@ public class PasswordChangeException : Exception
     {
 
     }
+
+    public PasswordChangeException(string message, Exception innerException) : base(message, innerException)
+    {
+    }
 }

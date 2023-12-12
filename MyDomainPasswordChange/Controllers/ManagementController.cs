@@ -22,32 +22,21 @@ namespace MyDomainPasswordChange.Controllers;
 
 [ServiceFilter(typeof(BlacklistFilter))]
 [Authorize]
-public class ManagementController : Controller
+public class ManagementController(IDomainPasswordManagement passwordManagement,
+                                  ILogger<ManagementController> logger,
+                                  IDependenciesGroupsManagement groupsManagement,
+                                  IPasswordHistoryManager historyManager,
+                                  IConfiguration configuration,
+                                  IMailNotificator mailNotificator,
+                                  IMapper mapper) : Controller
 {
-    private readonly IDomainPasswordManagement _passwordManagement;
-    private readonly ILogger<ManagementController> _logger;
-    private readonly IDependenciesGroupsManagement _groupsManagement;
-    private readonly IPasswordHistoryManager _historyManager;
-    private readonly IConfiguration _configuration;
-    private readonly IMailNotificator _mailNotificator;
-    private readonly IMapper _mapper;
-
-    public ManagementController(IDomainPasswordManagement passwordManagement,
-                                ILogger<ManagementController> logger,
-                                IDependenciesGroupsManagement groupsManagement,
-                                IPasswordHistoryManager historyManager,
-                                IConfiguration configuration,
-                                IMailNotificator mailNotificator,
-                                IMapper mapper)
-    {
-        _passwordManagement = passwordManagement;
-        _logger = logger;
-        _groupsManagement = groupsManagement;
-        _historyManager = historyManager;
-        _configuration = configuration;
-        _mailNotificator = mailNotificator;
-        _mapper = mapper;
-    }
+    private readonly IDomainPasswordManagement _passwordManagement = passwordManagement;
+    private readonly ILogger<ManagementController> _logger = logger;
+    private readonly IDependenciesGroupsManagement _groupsManagement = groupsManagement;
+    private readonly IPasswordHistoryManager _historyManager = historyManager;
+    private readonly IConfiguration _configuration = configuration;
+    private readonly IMailNotificator _mailNotificator = mailNotificator;
+    private readonly IMapper _mapper = mapper;
 
     [HttpGet]
     public async Task<IActionResult> IndexAsync()
@@ -278,5 +267,43 @@ public class ManagementController : Controller
         }
 
         return View(viewModel);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> UserDetailsAsync(string accountName)
+    {
+        UserInfo user;
+        try
+        {
+            user = await _passwordManagement.GetUserInfoAsync(accountName);
+        }
+        catch (UserNotFoundException)
+        {
+            TempData["UserUnknown"] = accountName;
+            return RedirectToAction("Index");
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = ex.Message;
+            return RedirectToAction("Index");
+        }
+
+        if (User.IsInRole("GlobalAdmin")
+            || user.Groups.Any(g => User.Claims.First(c => c.Type == "DependencyGroups").Value
+                                               .Contains(g.AccountName)))
+        {
+            var viewModel = _mapper.Map<UserViewModel>(user);
+            viewModel.InternetAccess = user.Groups switch
+            {
+                var groups when groups.Any(g => g.AccountName == Constants.FullInternetGroup) => InternetAccess.Full,
+                var groups when groups.Any(g => g.AccountName == Constants.RestInternetGroup) => InternetAccess.Restricted,
+                var groups when groups.Any(g => g.AccountName == Constants.NationalInternetGroup) => InternetAccess.National,
+                _ => InternetAccess.None
+            };
+            return View(viewModel);
+        }
+
+        TempData["UnauthorizedAction"] = true;
+        return RedirectToAction("Index");
     }
 }
