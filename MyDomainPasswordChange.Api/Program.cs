@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using MyDomainPasswordChange.Api.Authorization.Handlers;
+using MyDomainPasswordChange.Api.Authorization.Helpers;
 using MyDomainPasswordChange.Api.Authorization.Requirements;
 using MyDomainPasswordChange.Api.Endpoints;
 using MyDomainPasswordChange.Api.Endpoints.HealthChecks;
@@ -51,16 +52,16 @@ builder.Services.AddAuthorization(config =>
     config.FallbackPolicy = defaultPolicyBuilder.Build();
 
     AuthorizationPolicyBuilder domainAdminAccessPolicyBuilder = new();
-    _ = domainAdminAccessPolicyBuilder.RequireClaim("accountName");
+    _ = domainAdminAccessPolicyBuilder.RequireClaim(AuthorizationConstants.Claims.ACCOUNT_NAME);
     _ = domainAdminAccessPolicyBuilder.RequireAssertion(
-        context => context.User.Claims.Any(c => c.Type == "primaryGroup" && c.Value == "Domain Admins"));
+        context => context.User.Claims.Any(c => c.Type == AuthorizationConstants.Claims.PRIMARY_GROUP && c.Value == "Domain Admins"));
 
     config.AddPolicy(
-        "Domain Admins",
+        AuthorizationConstants.Policies.DOMAIN_ADMINS_POLICY,
         domainAdminAccessPolicyBuilder.Build());
 
     config.AddPolicy(
-        "Localized Domain Admins",
+        AuthorizationConstants.Policies.LOCALIZED_DOMAIN_ADMINS_POLICY,
         policy => policy.Requirements.Add(new LocalizedAdminRequirement()));
 });
 
@@ -107,7 +108,7 @@ builder.Services.AddTransient<IMailSettingsProvider, MailSettingsProvider>();
 builder.Services.AddSingleton<IMyMailService, MyMailService>();
 builder.Services.AddTransient<IMailNotificator, MailNotificator>();
 
-string? connectionString = builder.Configuration.GetConnectionString("Sqlite");
+var connectionString = builder.Configuration.GetConnectionString("Sqlite");
 SqliteDataContext dataContext = new(connectionString);
 builder.Services.AddSingleton<DataContext>(dataContext);
 builder.Services.AddScoped<IPasswordHistoryManager, PasswordHistoryManager>();

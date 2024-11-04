@@ -5,7 +5,7 @@ namespace MyDomainPasswordChange.Data.Sqlite.Migrations;
 
 public partial class Initial : Migration
 {
-    protected override void Up(MigrationBuilder migrationBuilder) => migrationBuilder.CreateTable(
+    protected override void Up(MigrationBuilder migrationBuilder) => _ = migrationBuilder.CreateTable(
             name: "HistoryEntries",
             columns: table => new
             {
@@ -16,6 +16,6 @@ public partial class Initial : Migration
             },
             constraints: table => table.PrimaryKey("PK_HistoryEntries", x => x.Id));
 
-    protected override void Down(MigrationBuilder migrationBuilder) => migrationBuilder.DropTable(
+    protected override void Down(MigrationBuilder migrationBuilder) => _ = migrationBuilder.DropTable(
             name: "HistoryEntries");
 }

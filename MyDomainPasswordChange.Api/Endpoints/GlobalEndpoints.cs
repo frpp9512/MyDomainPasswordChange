@@ -9,9 +9,9 @@ public static class GlobalEndpoints
 {
     public static WebApplication MapGlobalEndpoints(this WebApplication app)
     {
-        var global = app.MapGroup("/global");
+        RouteGroupBuilder global = app.MapGroup("/global");
 
-        global.MapGet("dependencies", GetDependencies);
+        _ = global.MapGet("dependencies", GetDependencies);
 
         return app;
     }
@@ -21,9 +21,9 @@ public static class GlobalEndpoints
                                            IMapper mapper,
                                            ILoggerFactory loggerFactory)
     {
-        var logger = loggerFactory.CreateLogger("GetDependencies");
-        var dependenciesConfig = dependenciesConfigOptions.Value;
-        var dtos = dependenciesConfig.Definitions.Where(dep => (dep.Type != "global") || (dep.Type == "global" && includeGlobal is true)).Select(dep => mapper.Map<DependencyDto>(dep)).ToList();
+        ILogger logger = loggerFactory.CreateLogger("GetDependencies");
+        DependenciesConfiguration dependenciesConfig = dependenciesConfigOptions.Value;
+        var dtos = dependenciesConfig.Definitions.Where(dep => (dep.Type != "global") || (dep.Type == "global" && includeGlobal is true)).Select(mapper.Map<DependencyDto>).ToList();
         return Results.Ok(dtos);
     }
 }

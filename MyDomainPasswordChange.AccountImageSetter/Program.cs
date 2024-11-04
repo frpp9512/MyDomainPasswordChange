@@ -2,8 +2,8 @@
 using MyDomainPasswordChange.Management.Managers;
 using MyDomainPasswordChange.Management.Models;
 
-string userName = Environment.UserName;
-string imagePath = @$"C:\Users\{userName}\AppData\Roaming\Microsoft\Windows\AccountPictures\{userName}.png";
+var userName = Environment.UserName;
+var imagePath = @$"C:\Users\{userName}\AppData\Roaming\Microsoft\Windows\AccountPictures\{userName}.png";
 
 System.Drawing.Image image = await new MyDomainPasswordManagement(Options.Create(new LdapConnectionConfiguration
 {

@@ -17,7 +17,7 @@ public class CounterManager : ICounterManager
             return;
         }
 
-        var counter = _counters.FirstOrDefault(c => c.Key == key);
+        Counter counter = _counters.FirstOrDefault(c => c.Key == key);
         counter.Description = description;
         counter.Reset();
     }
@@ -28,7 +28,7 @@ public class CounterManager : ICounterManager
     {
         if (_counters.Any(c => c.Key == counterKey))
         {
-            var counter = _counters.FirstOrDefault(c => c.Key == counterKey);
+            Counter counter = _counters.FirstOrDefault(c => c.Key == counterKey);
             counter.Count();
             return;
         }
@@ -41,7 +41,7 @@ public class CounterManager : ICounterManager
     {
         if (_counters.Any(c => c.Key == counterKey))
         {
-            var counter = _counters.FirstOrDefault(c => c.Key == counterKey);
+            Counter counter = _counters.FirstOrDefault(c => c.Key == counterKey);
             return counter.Value;
         }
 
@@ -54,7 +54,7 @@ public class CounterManager : ICounterManager
     {
         if (_counters.Any(c => c.Key == counterKey))
         {
-            var counter = _counters.FirstOrDefault(c => c.Key == counterKey);
+            Counter counter = _counters.FirstOrDefault(c => c.Key == counterKey);
             counter.Reset();
         }
 
@@ -68,7 +68,7 @@ public class CounterManager : ICounterManager
             throw new KeyNotFoundException("El contador espeficado no existe.");
         }
 
-        var counter = _counters.FirstOrDefault(c => c.Key == counterKey);
+        Counter counter = _counters.FirstOrDefault(c => c.Key == counterKey);
         if (counter.Alarm is not null)
         {
             counter.Alarm.AlarmValue = alarmValue;
@@ -89,7 +89,7 @@ public class CounterManager : ICounterManager
             throw new KeyNotFoundException("El contador espeficado no existe.");
         }
 
-        var counter = _counters.FirstOrDefault(c => c.Key == counterKey);
+        Counter counter = _counters.FirstOrDefault(c => c.Key == counterKey);
         return counter.Alarm is not null && counter.Alarming;
     }
 
@@ -100,7 +100,7 @@ public class CounterManager : ICounterManager
             return;
         }
 
-        var counter = _counters.FirstOrDefault(c => c.Key == counterKey);
+        Counter counter = _counters.FirstOrDefault(c => c.Key == counterKey);
         _ = _counters.Remove(counter);
     }
 
@@ -113,7 +113,7 @@ public class CounterManager : ICounterManager
             return DateTime.MinValue;
         }
 
-        var counter = _counters.FirstOrDefault(c => c.Key == counterKey);
+        Counter counter = _counters.FirstOrDefault(c => c.Key == counterKey);
         return counter.LastCount;
     }
 
@@ -126,7 +126,7 @@ public class CounterManager : ICounterManager
             throw new KeyNotFoundException("El contador espeficado no existe.");
         }
 
-        var counter = _counters.FirstOrDefault(c => c.Key == counterKey);
+        Counter counter = _counters.FirstOrDefault(c => c.Key == counterKey);
         return counter.HasAlarm;
     }
 }

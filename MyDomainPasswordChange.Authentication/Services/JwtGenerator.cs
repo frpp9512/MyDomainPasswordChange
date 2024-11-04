@@ -5,7 +5,6 @@ using MyDomainPasswordChange.Authentication.Contracts;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using System.Text.Json;
 
 namespace MyDomainPasswordChange.Authentication.Services;
 
@@ -16,26 +15,26 @@ public class JwtGenerator(IOptions<JwtGeneratorOptions> options, LdapHelper ldap
 
     public string GenerateJwt(string accountName, string password)
     {
-        List<Claim> claims = [new Claim("accountName", accountName), .._options.ExtraClaims.Select(ec => new Claim(ec.Key, ec.Value))];
+        List<Claim> claims = [new Claim("accountName", accountName), .. _options.ExtraClaims.Select(ec => new Claim(ec.Key, ec.Value))];
         var userPrimaryGroup = _ldapHelper.GetPrimaryGroup(accountName, password);
         if (userPrimaryGroup is not null)
         {
             claims.Add(new Claim("primaryGroup", userPrimaryGroup));
         }
 
-        var userGroups = _ldapHelper.GetUserGroups(accountName, password).Except([userPrimaryGroup]);
+        IEnumerable<string?> userGroups = _ldapHelper.GetUserGroups(accountName, password).Except([userPrimaryGroup]);
         if (userGroups.Any())
         {
             claims = [.. claims, new Claim("groups", string.Join(",", userGroups))];
         }
 
-        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.Secret));
-        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-        var token = new JwtSecurityToken(
+        SymmetricSecurityKey securityKey = new(Encoding.UTF8.GetBytes(_options.Secret));
+        SigningCredentials credentials = new(securityKey, SecurityAlgorithms.HmacSha256);
+        JwtSecurityToken token = new(
             issuer: _options.Issuer,
             audience: _options.Audience,
             claims: claims,
-            expires: DateTime.Now.AddMinutes(30),
+            expires: DateTime.Now.AddMinutes(_options.Expires),
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);

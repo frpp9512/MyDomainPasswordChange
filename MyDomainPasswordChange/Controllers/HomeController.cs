@@ -96,7 +96,7 @@ public class HomeController(ILogger<HomeController> logger,
 
             _passwordManagement.ChangeUserPassword(viewModel.Username, viewModel.Password, viewModel.NewPassword);
             await _historyManager.RegisterPasswordAsync(viewModel.Username, viewModel.NewPassword);
-            var userInfo = await _passwordManagement.GetUserInfo(viewModel.Username);
+            Management.Models.UserInfo userInfo = await _passwordManagement.GetUserInfo(viewModel.Username);
             await _mailNotificator.SendChangePasswordNotificationAsync(viewModel.Username);
             TempData["PasswordChanged"] = true;
             return RedirectToAction("ChangePasswordSuccess", new UserViewModel
@@ -127,8 +127,7 @@ public class HomeController(ILogger<HomeController> logger,
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult ChangePasswordSuccess(UserViewModel viewModel)
-        => TempData["PasswordChanged"] != null && (bool)TempData["PasswordChanged"] ? View(viewModel) : RedirectToAction("Index");
+    public IActionResult ChangePasswordSuccess(UserViewModel viewModel) => TempData["PasswordChanged"] != null && (bool)TempData["PasswordChanged"] ? View(viewModel) : RedirectToAction("Index");
 
     [HttpGet]
     public async Task<FileStreamResult> UserPicture(string accountName)
@@ -140,7 +139,7 @@ public class HomeController(ILogger<HomeController> logger,
             image = await System.IO.File.ReadAllBytesAsync(defaultPicture);
         }
 
-        var stream = new MemoryStream(image);
+        MemoryStream stream = new(image);
         return new FileStreamResult(stream, new MediaTypeHeaderValue("image/jpg"))
         {
             FileDownloadName = $"{accountName}.jpeg"
@@ -153,9 +152,9 @@ public class HomeController(ILogger<HomeController> logger,
         try
         {
             _logger.LogInformation($"Requesting challenge image Id: {challengeId}.");
-            var challengeImage = _challenger.GetChallengeImage(challengeId);
+            System.Drawing.Image challengeImage = _challenger.GetChallengeImage(challengeId);
             _logger.LogInformation($"Obtained challenge image with: {challengeImage?.Width} width.");
-            var stream = new MemoryStream();
+            MemoryStream stream = new();
             challengeImage.Save(stream, ImageFormat.Jpeg);
             return new FileContentResult(stream.ToArray(), new MediaTypeHeaderValue("image/jpg"));
         }

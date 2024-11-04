@@ -20,12 +20,12 @@ public class LocalizedAdminRequirementHandler(IHttpContextAccessor httpContextAc
         }
 
         HttpContext? httpContext = _httpContextAccessor.HttpContext;
-        if (httpContext is null || httpContext.Request.RouteValues.TryGetValue("dependencyId", out object? dependencyId) is false || dependencyId is null)
+        if (httpContext is null || httpContext.Request.RouteValues.TryGetValue("dependencyId", out var dependencyId) is false || dependencyId is null)
         {
             return Task.CompletedTask;
         }
 
-        string[] groups = context.User.Claims.FirstOrDefault(c => c.Type == "groups")?.Value.Split(',') ?? [];
+        var groups = context.User.Claims.FirstOrDefault(c => c.Type == "groups")?.Value.Split(',') ?? [];
         if (groups.Contains(_authConfiguration.GlobalAdministratorsGroup))
         {
             context.Succeed(requirement);

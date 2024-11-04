@@ -37,14 +37,14 @@ public class Worker(ILogger<Worker> logger,
         }
 
         _logger.LogInformation("The password expiration service will check for the configured time.");
-        string checkTime = _configuration.GetValue<string>("checkExpirationTime");
+        var checkTime = _configuration.GetValue<string>("checkExpirationTime");
         if (string.IsNullOrEmpty(checkTime))
         {
             await StopAsync(CancellationToken.None);
             return;
         }
 
-        DateTime checkTimeValue = DateTime.ParseExact(checkTime, "HH:mm", null);
+        var checkTimeValue = DateTime.ParseExact(checkTime, "HH:mm", null);
         DateTime now = DateTime.Now;
         if (checkTimeValue.Hour != now.Hour || checkTimeValue.Minute != now.Minute)
         {
@@ -52,8 +52,8 @@ public class Worker(ILogger<Worker> logger,
         }
 
         _logger.LogInformation("The configured time as arrived. Starting password expiration check!");
-        double expirationDays = _configuration.GetValue<double>("passwordExpirationDays");
-        double notificationThreshold = _configuration.GetValue<double>("expirationNotificationThreshold");
+        var expirationDays = _configuration.GetValue<double>("passwordExpirationDays");
+        var notificationThreshold = _configuration.GetValue<double>("expirationNotificationThreshold");
         _logger.LogInformation("Loading users information from LDAP server...");
         System.Collections.Generic.List<MyDomainPasswordChange.Management.Models.UserInfo> users = await _passwordManagement.GetAllActiveUsersInfo();
         _logger.LogInformation($"Loaded {users.Count} users information from LDAP server.");
@@ -82,8 +82,5 @@ public class Worker(ILogger<Worker> logger,
         return base.StopAsync(cancellationToken);
     }
 
-    protected override Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        return Task.CompletedTask;
-    }
+    protected override Task ExecuteAsync(CancellationToken stoppingToken) => Task.CompletedTask;
 }

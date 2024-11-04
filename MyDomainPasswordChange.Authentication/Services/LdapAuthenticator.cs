@@ -13,7 +13,7 @@ public class LdapAuthenticator(IOptions<LdapAuthenticationOptions> options) : IL
     {
         try
         {
-            using var ldapConnection = new LdapConnection { SecureSocketLayer = false };
+            using LdapConnection ldapConnection = new() { SecureSocketLayer = false };
             ldapConnection.Connect(_options.LdapServer, _options.LdapPort);
             ldapConnection.Bind(_options.GetFullAccountName(accountName), password);
             return ldapConnection.Bound;
@@ -24,8 +24,5 @@ public class LdapAuthenticator(IOptions<LdapAuthenticationOptions> options) : IL
         }
     }
 
-    public Task<bool> AuthenticateAsync(string accountName, string password)
-    {
-        return Task.Run(() => Authenticate(accountName, password));
-    }
+    public Task<bool> AuthenticateAsync(string accountName, string password) => Task.Run(() => Authenticate(accountName, password));
 }

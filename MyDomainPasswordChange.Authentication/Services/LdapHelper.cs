@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 using MyDomainPasswordChange.Authentication.Configuration;
 using Novell.Directory.Ldap;
-using System.IO.Pipes;
 using System.Security.Principal;
 
 namespace MyDomainPasswordChange.Authentication.Services;
@@ -12,13 +11,13 @@ public class LdapHelper(IOptions<LdapAuthenticationOptions> options)
 
     public string? GetPrimaryGroup(string accountName, string password)
     {
-        using var ldapConnection = new LdapConnection { SecureSocketLayer = false };
+        using LdapConnection ldapConnection = new() { SecureSocketLayer = false };
         ldapConnection.Connect(_options.LdapServer, _options.LdapPort);
         ldapConnection.Bind(_options.GetFullAccountName(accountName), password);
 
         var searchFilter = $"(sAMAccountName={accountName})";
-        var searchConstraints = new LdapSearchConstraints();
-        var searchResults = ldapConnection.Search(
+        LdapSearchConstraints searchConstraints = new();
+        ILdapSearchResults searchResults = ldapConnection.Search(
             _options.SearchBase,
             LdapConnection.ScopeSub,
             searchFilter,
@@ -29,7 +28,7 @@ public class LdapHelper(IOptions<LdapAuthenticationOptions> options)
         string? primaryGroupID = null;
         if (searchResults.HasMore())
         {
-            var entry = searchResults.Next();
+            LdapEntry entry = searchResults.Next();
             primaryGroupID = entry.GetAttribute("primaryGroupID").StringValue;
         }
 
@@ -41,7 +40,7 @@ public class LdapHelper(IOptions<LdapAuthenticationOptions> options)
         var domainSid = GetDomainSid(accountName, password);
         var groupSid = $"{domainSid}-{primaryGroupID}";
         var groupSearchFilter = $"(objectSid={groupSid})";
-        var groupSearchResults = ldapConnection.Search(
+        ILdapSearchResults groupSearchResults = ldapConnection.Search(
             _options.SearchBase,
             LdapConnection.ScopeSub,
             groupSearchFilter,
@@ -51,7 +50,7 @@ public class LdapHelper(IOptions<LdapAuthenticationOptions> options)
         string? primaryGroupCN = null;
         if (groupSearchResults.HasMore())
         {
-            var groupEntry = groupSearchResults.Next();
+            LdapEntry groupEntry = groupSearchResults.Next();
             primaryGroupCN = groupEntry.GetAttribute("cn").StringValue;
         }
 
@@ -60,11 +59,11 @@ public class LdapHelper(IOptions<LdapAuthenticationOptions> options)
 
     public string? GetDomainSid(string username, string password)
     {
-        using var ldapConnection = new LdapConnection { SecureSocketLayer = false };
+        using LdapConnection ldapConnection = new() { SecureSocketLayer = false };
         ldapConnection.Connect(_options.LdapServer, _options.LdapPort);
         ldapConnection.Bind(_options.GetFullAccountName(username), password);
         var searchFilter = "(objectClass=domain)";
-        var searchResults = ldapConnection.Search(
+        ILdapSearchResults searchResults = ldapConnection.Search(
             _options.SearchBase,
             LdapConnection.ScopeBase,
             searchFilter,
@@ -74,7 +73,7 @@ public class LdapHelper(IOptions<LdapAuthenticationOptions> options)
         byte[]? domainSid = null;
         if (searchResults.HasMore())
         {
-            var entry = searchResults.Next();
+            LdapEntry entry = searchResults.Next();
             domainSid = entry.GetAttribute("objectSid").ByteValue;
         }
 
@@ -83,31 +82,30 @@ public class LdapHelper(IOptions<LdapAuthenticationOptions> options)
 
     public List<string> GetUserGroups(string username, string password)
     {
-        var ldapConnection = new LdapConnection { SecureSocketLayer = false };
+        LdapConnection ldapConnection = new() { SecureSocketLayer = false };
         ldapConnection.Connect(_options.LdapServer, _options.LdapPort);
         ldapConnection.Bind(_options.GetFullAccountName(username), password);
 
         var searchFilter = $"(sAMAccountName={username})";
-        var searchResults = ldapConnection.Search(
+        ILdapSearchResults searchResults = ldapConnection.Search(
             _options.SearchBase,
             LdapConnection.ScopeSub,
             searchFilter,
             ["memberOf"],
             false);
 
-        var groups = new List<string>();
+        List<string> groups = [];
         if (!searchResults.HasMore())
         {
             return groups;
         }
 
-        var entry = searchResults.Next();
-        var attribute = entry.GetAttribute("memberOf");
+        LdapEntry entry = searchResults.Next();
+        LdapAttribute? attribute = entry.GetAttribute("memberOf");
         if (attribute is null)
         {
             return groups;
         }
-       
 
         var groupDns = attribute.StringValueArray;
         return [.. groupDns.Select(GetCommonNameFromDn)];

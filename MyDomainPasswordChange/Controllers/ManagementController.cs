@@ -46,7 +46,7 @@ public class ManagementController(IDomainPasswordManagement passwordManagement,
 
         try
         {
-            var userInfo = await _passwordManagement.GetUserInfo(accountName);
+            UserInfo userInfo = await _passwordManagement.GetUserInfo(accountName);
             groupsDeclarations = userInfo.Groups.Any(g => _groupsManagement.DefineIfGlobalDeclaration(g.AccountName))
                 ? _groupsManagement.GetAllDependenciesDeclarations()
                 : userInfo.Groups.Where(g => _groupsManagement.DefineIfDependencyDeclaration(g.AccountName))
@@ -55,10 +55,10 @@ public class ManagementController(IDomainPasswordManagement passwordManagement,
         catch (Exception ex)
         {
             TempData["Error"] = ex.Message;
-            groupsDeclarations = new List<DependencyDeclaration>();
+            groupsDeclarations = [];
         }
 
-        var viewModel = await GenerateUserManagementViewModelAsync(groupsDeclarations);
+        UsersManagementViewModel viewModel = await GenerateUserManagementViewModelAsync(groupsDeclarations);
 
         return View(viewModel);
     }
@@ -67,10 +67,10 @@ public class ManagementController(IDomainPasswordManagement passwordManagement,
     [Authorize(Roles = "GlobalAdmin")]
     public async Task<IActionResult> GetUsersByInternetAccess()
     {
-        var ldapFullInternetGroup = await _passwordManagement.GetGroupInfoByNameAsync("navInternacional");
-        var ldapRestInternetGroup = await _passwordManagement.GetGroupInfoByNameAsync("navInternacionalRest");
-        var usersWithFullInternet = await _passwordManagement.GetActiveUsersInfoFromGroupAsync(ldapFullInternetGroup);
-        var usersWithRestInternet = await _passwordManagement.GetActiveUsersInfoFromGroupAsync(ldapRestInternetGroup);
+        GroupInfo ldapFullInternetGroup = await _passwordManagement.GetGroupInfoByNameAsync("navInternacional");
+        GroupInfo ldapRestInternetGroup = await _passwordManagement.GetGroupInfoByNameAsync("navInternacionalRest");
+        List<UserInfo> usersWithFullInternet = await _passwordManagement.GetActiveUsersInfoFromGroupAsync(ldapFullInternetGroup);
+        List<UserInfo> usersWithRestInternet = await _passwordManagement.GetActiveUsersInfoFromGroupAsync(ldapRestInternetGroup);
         return Ok(new
         {
             totalUsersWithInternet = usersWithRestInternet.Count + usersWithFullInternet.Count,
@@ -92,37 +92,37 @@ public class ManagementController(IDomainPasswordManagement passwordManagement,
 
     private async Task<UsersManagementViewModel> GenerateUserManagementViewModelAsync(IEnumerable<DependencyDeclaration> groupsDeclarations)
     {
-        var viewModel = new UsersManagementViewModel();
-        foreach (var groupDeclaration in groupsDeclarations)
+        UsersManagementViewModel viewModel = new();
+        foreach (DependencyDeclaration groupDeclaration in groupsDeclarations)
         {
-            var ldapGroup = await _passwordManagement.GetGroupInfoByNameAsync(groupDeclaration.GroupName);
-            var groupVM = new DependencyGroupViewModel
+            GroupInfo ldapGroup = await _passwordManagement.GetGroupInfoByNameAsync(groupDeclaration.GroupName);
+            DependencyGroupViewModel groupVM = new()
             {
                 DisplayName = ldapGroup.DisplayName,
                 Name = ldapGroup.AccountName,
                 Description = ldapGroup.Description
             };
-            var groupUsers = await _passwordManagement.GetActiveUsersInfoFromGroupAsync(ldapGroup);
+            List<UserInfo> groupUsers = await _passwordManagement.GetActiveUsersInfoFromGroupAsync(ldapGroup);
             groupVM.Users = MapUsersToViewModels(groupUsers);
             viewModel.Groups.Add(groupVM);
         }
 
-        var ldapGroups = groupsDeclarations.Select(g => _passwordManagement.GetGroupInfoByNameAsync(g.GroupName));
+        IEnumerable<Task<GroupInfo>> ldapGroups = groupsDeclarations.Select(g => _passwordManagement.GetGroupInfoByNameAsync(g.GroupName));
         return viewModel;
     }
 
     private List<UserViewModel> MapUsersToViewModels(List<UserInfo> groupUsers) => groupUsers.Select(user =>
-    {
-        var vm = _mapper.Map<UserViewModel>(user);
-        vm.InternetAccess = user.Groups switch
-        {
-            var groups when groups.Any(g => g.AccountName == Constants.FullInternetGroup) => InternetAccess.Full,
-            var groups when groups.Any(g => g.AccountName == Constants.RestInternetGroup) => InternetAccess.Restricted,
-            var groups when groups.Any(g => g.AccountName == Constants.NationalInternetGroup) => InternetAccess.National,
-            _ => InternetAccess.None
-        };
-        return vm;
-    }).ToList();
+                                                                                    {
+                                                                                        UserViewModel vm = _mapper.Map<UserViewModel>(user);
+                                                                                        vm.InternetAccess = user.Groups switch
+                                                                                        {
+                                                                                            var groups when groups.Any(g => g.AccountName == Constants.FullInternetGroup) => InternetAccess.Full,
+                                                                                            var groups when groups.Any(g => g.AccountName == Constants.RestInternetGroup) => InternetAccess.Restricted,
+                                                                                            var groups when groups.Any(g => g.AccountName == Constants.NationalInternetGroup) => InternetAccess.National,
+                                                                                            _ => InternetAccess.None
+                                                                                        };
+                                                                                        return vm;
+                                                                                    }).ToList();
 
     [HttpGet]
     public async Task<IActionResult> ResetUserPasswordAsync(string accountName)
@@ -145,7 +145,7 @@ public class ManagementController(IDomainPasswordManagement passwordManagement,
 
         if (User.IsInRole("GlobalAdmin") || user.Groups.Any(g => User.Claims.First(c => c.Type == "DependencyGroups").Value.Contains(g.AccountName)))
         {
-            var viewModel = _mapper.Map<UserViewModel>(user);
+            UserViewModel viewModel = _mapper.Map<UserViewModel>(user);
             return View(viewModel);
         }
 
@@ -203,7 +203,7 @@ public class ManagementController(IDomainPasswordManagement passwordManagement,
             || user.Groups.Any(g => User.Claims.First(c => c.Type == "DependencyGroups").Value
                                                .Contains(g.AccountName)))
         {
-            var viewModel = _mapper.Map<SetUserPasswordViewModel>(user);
+            SetUserPasswordViewModel viewModel = _mapper.Map<SetUserPasswordViewModel>(user);
             return View(viewModel);
         }
 
@@ -226,7 +226,7 @@ public class ManagementController(IDomainPasswordManagement passwordManagement,
                 if (await _historyManager.CheckPasswordHistoryAsync(viewModel.AccountName, viewModel.Password, _configuration.GetValue<int>("PasswordHistoryCheck")))
                 {
                     ModelState.AddModelError("PasswordHistory", "La nueva contraseña ya ha sido utilizada por el usuario anteriormente.");
-                    var user = await _passwordManagement.GetUserInfoAsync(viewModel.AccountName);
+                    UserInfo user = await _passwordManagement.GetUserInfoAsync(viewModel.AccountName);
                     viewModel = new SetUserPasswordViewModel
                     {
                         AccountName = user.AccountName,
@@ -292,7 +292,7 @@ public class ManagementController(IDomainPasswordManagement passwordManagement,
             || user.Groups.Any(g => User.Claims.First(c => c.Type == "DependencyGroups").Value
                                                .Contains(g.AccountName)))
         {
-            var viewModel = _mapper.Map<UserViewModel>(user);
+            UserViewModel viewModel = _mapper.Map<UserViewModel>(user);
             viewModel.InternetAccess = user.Groups switch
             {
                 var groups when groups.Any(g => g.AccountName == Constants.FullInternetGroup) => InternetAccess.Full,

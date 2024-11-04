@@ -13,12 +13,12 @@ public static class SecurityUtil
     {
         byte[] keyArray;
         var toEncryptArray = Encoding.UTF8.GetBytes(toEncrypt);
-        var hashmd5 = new MD5CryptoServiceProvider();
+        MD5CryptoServiceProvider hashmd5 = new();
         keyArray = hashmd5.ComputeHash(Encoding.UTF8.GetBytes(key));
         //Always release the resources and flush data
         // of the Cryptographic service provide. Best Practice
         hashmd5.Clear();
-        var tdes = new TripleDESCryptoServiceProvider
+        TripleDESCryptoServiceProvider tdes = new()
         {
             //set the secret key for the tripleDES algorithm
             Key = keyArray,
@@ -28,7 +28,7 @@ public static class SecurityUtil
             //padding mode(if any extra byte added)
             Padding = PaddingMode.PKCS7
         };
-        var cTransform = tdes.CreateEncryptor();
+        ICryptoTransform cTransform = tdes.CreateEncryptor();
         //transform the specified region of bytes array to resultArray
         var resultArray =
           cTransform.TransformFinalBlock(toEncryptArray, 0,
@@ -45,11 +45,11 @@ public static class SecurityUtil
         //get the byte code of the string
         var toEncryptArray = Convert.FromBase64String(cipherString);
         //if hashing was used get the hash code with regards to your key
-        var hashmd5 = new MD5CryptoServiceProvider();
+        MD5CryptoServiceProvider hashmd5 = new();
         keyArray = hashmd5.ComputeHash(UTF8Encoding.UTF8.GetBytes(key));
         //release any resource held by the MD5CryptoServiceProvider
         hashmd5.Clear();
-        var tdes = new TripleDESCryptoServiceProvider
+        TripleDESCryptoServiceProvider tdes = new()
         {
             //set the secret key for the tripleDES algorithm
             Key = keyArray,
@@ -59,7 +59,7 @@ public static class SecurityUtil
             //padding mode(if any extra byte added)
             Padding = PaddingMode.PKCS7
         };
-        var cTransform = tdes.CreateDecryptor();
+        ICryptoTransform cTransform = tdes.CreateDecryptor();
         var resultArray = cTransform.TransformFinalBlock(
                              toEncryptArray, 0, toEncryptArray.Length);
         //Release resources held by TripleDes Encryptor                
@@ -70,7 +70,7 @@ public static class SecurityUtil
 
     public static string ToBase16String(string text)
     {
-        var r = new Random();
+        Random r = new();
         var key = r.Next(5000, 10000);
         return IntToHex(key) + StrToHex(text, key);
     }
@@ -109,7 +109,7 @@ public static class SecurityUtil
 
     public static SecureString SecureString(string text)
     {
-        var ss = new SecureString();
+        SecureString ss = new();
         for (var i = 0; i < text.Length; i++)
         {
             ss.InsertAt(ss.Length, text[i]);
@@ -132,7 +132,7 @@ public static class SecurityUtil
             key_bytes[i] = Convert.ToByte(key[i]);
         }
 
-        var hmd5 = new HMACMD5(key_bytes);
+        HMACMD5 hmd5 = new(key_bytes);
         var text_bytes = new byte[text.Length];
         for (var j = 0; j < text_bytes.Length; j++)
         {
@@ -162,7 +162,7 @@ public static class SecurityUtil
 
     private static string HexToStr(string hex, int key)
     {
-        var list = new List<string>();
+        List<string> list = [];
         var aux = "";
         for (var i = 0; i < hex.Length; i++)
         {

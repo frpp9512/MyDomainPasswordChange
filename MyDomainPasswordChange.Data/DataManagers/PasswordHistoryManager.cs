@@ -24,7 +24,7 @@ public class PasswordHistoryManager : IPasswordHistoryManager
 
     public async Task RegisterPasswordAsync(string accountName, string password)
     {
-        var entry = new PasswordHistoryEntry
+        PasswordHistoryEntry entry = new()
         {
             AccountName = accountName,
             Updated = DateTime.Now,
@@ -36,13 +36,13 @@ public class PasswordHistoryManager : IPasswordHistoryManager
 
     public async Task<bool> CheckPasswordHistoryAsync(string accountName, string password, int passwordHistoryCount)
     {
-        var history = await LoadPasswordHistoryForUserAsync(accountName, passwordHistoryCount);
+        IEnumerable<PasswordHistoryEntry> history = await LoadPasswordHistoryForUserAsync(accountName, passwordHistoryCount);
         if (history is null || !history.Any())
         {
             return false;
         }
 
-        foreach (var entry in history)
+        foreach (PasswordHistoryEntry entry in history)
         {
             if (YpSecurity.AuthUtil.TryAuth(accountName, ref password, YpSecurity.SecurityUtil.SecureString(entry.Password), false))
             {
@@ -60,7 +60,7 @@ public class PasswordHistoryManager : IPasswordHistoryManager
             return null;
         }
 
-        var results = await _dataContext.HistoryEntries
+        List<PasswordHistoryEntry> results = await _dataContext.HistoryEntries
                                         .Where(e => e.AccountName == accountName)
                                         .OrderByDescending(e => e.Updated)
                                         .Take(passwordHistoryCount)
@@ -68,6 +68,5 @@ public class PasswordHistoryManager : IPasswordHistoryManager
         return results;
     }
 
-    public async Task<bool> AccountHasEntries(string accountName)
-        => await _dataContext.HistoryEntries.Where(e => e.AccountName == accountName).AnyAsync();
+    public async Task<bool> AccountHasEntries(string accountName) => await _dataContext.HistoryEntries.Where(e => e.AccountName == accountName).AnyAsync();
 }

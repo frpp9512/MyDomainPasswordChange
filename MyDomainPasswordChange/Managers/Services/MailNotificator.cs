@@ -27,7 +27,7 @@ public class MailNotificator(IMyMailService mailService,
 
     public async Task SendChangePasswordAlertAsync(string accountName)
     {
-        var user = await _passwordManagement.GetUserInfo(accountName);
+        UserInfo user = await _passwordManagement.GetUserInfo(accountName);
         await _mailService.SendMailAsync(new MailRequest
         {
             Body = GetAlertMailTemplate(user.DisplayName),
@@ -40,7 +40,7 @@ public class MailNotificator(IMyMailService mailService,
 
     public async Task SendChangePasswordNotificationAsync(string accountName)
     {
-        var user = await _passwordManagement.GetUserInfo(accountName);
+        UserInfo user = await _passwordManagement.GetUserInfo(accountName);
         if (string.IsNullOrEmpty(user.Email))
         {
             return;
@@ -76,11 +76,11 @@ public class MailNotificator(IMyMailService mailService,
         var template = File.ReadAllText(templatePath);
         template = template.Replace("{accountName}", accountName);
         template = template.Replace("{requestIp}", HttpContext.Connection.RemoteIpAddress.ToString());
-        var dateTime = DateTime.Now;
+        DateTime dateTime = DateTime.Now;
         template = template.Replace("{time}", dateTime.ToShortTimeString());
         template = template.Replace("{date}", dateTime.ToShortDateString());
         template = template.Replace("{expirationDays}", expirationDays.ToString());
-        var expirationDate = dateTime.AddDays(expirationDays);
+        DateTime expirationDate = dateTime.AddDays(expirationDays);
         template = template.Replace("{expirationDate}", expirationDate.ToShortDateString());
         return template;
     }
@@ -91,7 +91,7 @@ public class MailNotificator(IMyMailService mailService,
         var template = File.ReadAllText(templatePath);
         template = template.Replace("{accountName}", accountName);
         template = template.Replace("{requestIp}", HttpContext.Connection.RemoteIpAddress.ToString());
-        var dateTime = DateTime.Now;
+        DateTime dateTime = DateTime.Now;
         template = template.Replace("{time}", dateTime.ToShortTimeString());
         template = template.Replace("{date}", dateTime.ToShortDateString());
         return template;
@@ -102,7 +102,7 @@ public class MailNotificator(IMyMailService mailService,
         var templatePath = Path.Combine(_webHostEnvironment.WebRootPath, $"templates{Path.DirectorySeparatorChar}mail_challenge_alert_template.html");
         var template = File.ReadAllText(templatePath);
         template = template.Replace("{requestIp}", HttpContext.Connection.RemoteIpAddress.ToString());
-        var dateTime = DateTime.Now;
+        DateTime dateTime = DateTime.Now;
         template = template.Replace("{time}", dateTime.ToShortTimeString());
         template = template.Replace("{date}", dateTime.ToShortDateString());
         return template;
@@ -113,7 +113,7 @@ public class MailNotificator(IMyMailService mailService,
         var templatePath = Path.Combine(_webHostEnvironment.WebRootPath, $"templates{Path.DirectorySeparatorChar}mail_ip_blacklisted_template.html");
         var template = File.ReadAllText(templatePath);
         template = template.Replace("{requestIp}", HttpContext.Connection.RemoteIpAddress.ToString());
-        var dateTime = DateTime.Now;
+        DateTime dateTime = DateTime.Now;
         template = template.Replace("{time}", dateTime.ToShortTimeString());
         template = template.Replace("{date}", dateTime.ToShortDateString());
         template = template.Replace("{blacklist_reason}", reason switch
@@ -139,7 +139,7 @@ public class MailNotificator(IMyMailService mailService,
         var templatePath = Path.Combine(_webHostEnvironment.WebRootPath, $"templates{Path.DirectorySeparatorChar}mail_expiration_notification_template.html");
         var template = File.ReadAllText(templatePath);
         template = template.Replace("{displayName}", userInfo.DisplayName);
-        var dateTime = DateTime.Now;
+        DateTime dateTime = DateTime.Now;
         template = template.Replace("{expirationDays}", (expirationDate - dateTime).Days.ToString());
         template = template.Replace("{expirationDate}", expirationDate.ToShortDateString());
         template = template.Replace("{accountName}", userInfo.AccountName);
@@ -159,7 +159,7 @@ public class MailNotificator(IMyMailService mailService,
         var templatePath = Path.Combine(_webHostEnvironment.WebRootPath, $"templates{Path.DirectorySeparatorChar}mail_admin_login_failed_alert_template.html");
         var template = File.ReadAllText(templatePath);
         template = template.Replace("{requestIp}", HttpContext.Connection.RemoteIpAddress.ToString());
-        var dateTime = DateTime.Now;
+        DateTime dateTime = DateTime.Now;
         template = template.Replace("{time}", dateTime.ToShortTimeString());
         template = template.Replace("{date}", dateTime.ToShortDateString());
         return template;
@@ -178,19 +178,18 @@ public class MailNotificator(IMyMailService mailService,
         var template = File.ReadAllText(templatePath);
         template = template.Replace("{accountName}", $"{userInfo.DisplayName} ({userInfo.Email})");
         template = template.Replace("{requestIp}", HttpContext.Connection.RemoteIpAddress.ToString());
-        var dateTime = DateTime.Now;
+        DateTime dateTime = DateTime.Now;
         template = template.Replace("{time}", dateTime.ToShortTimeString());
         template = template.Replace("{date}", dateTime.ToShortDateString());
         return template;
     }
 
-    public async Task SendManagementUserPasswordResetted(UserInfo userInfo, (string name, string email) adminInfo)
-        => await _mailService.SendMailAsync(new MailRequest
-        {
-            Body = GetManagementUserPasswordResettedTemplate(userInfo, adminInfo),
-            MailTo = AdminEmail,
-            Subject = "Contraseña reseteada por administrador - Cambio de contraseña"
-        });
+    public async Task SendManagementUserPasswordResetted(UserInfo userInfo, (string name, string email) adminInfo) => await _mailService.SendMailAsync(new MailRequest
+    {
+        Body = GetManagementUserPasswordResettedTemplate(userInfo, adminInfo),
+        MailTo = AdminEmail,
+        Subject = "Contraseña reseteada por administrador - Cambio de contraseña"
+    });
 
     private string GetManagementUserPasswordResettedTemplate(UserInfo userInfo, (string name, string email) adminInfo)
     {
@@ -199,19 +198,18 @@ public class MailNotificator(IMyMailService mailService,
         template = template.Replace("{adminAccountName}", $"{adminInfo.name} ({adminInfo.email})");
         template = template.Replace("{userAccountName}", $"{userInfo.DisplayName} ({userInfo.Email})");
         template = template.Replace("{requestIp}", HttpContext.Connection.RemoteIpAddress.ToString());
-        var dateTime = DateTime.Now;
+        DateTime dateTime = DateTime.Now;
         template = template.Replace("{time}", dateTime.ToShortTimeString());
         template = template.Replace("{date}", dateTime.ToShortDateString());
         return template;
     }
 
-    public async Task SendManagementUserPasswordSetted(UserInfo userInfo, (string name, string email) adminInfo)
-        => await _mailService.SendMailAsync(new MailRequest
-        {
-            Body = GetManagementUserPasswordSettedTemplate(userInfo, adminInfo),
-            MailTo = AdminEmail,
-            Subject = "Contraseña establecida por administrador - Cambio de contraseña"
-        });
+    public async Task SendManagementUserPasswordSetted(UserInfo userInfo, (string name, string email) adminInfo) => await _mailService.SendMailAsync(new MailRequest
+    {
+        Body = GetManagementUserPasswordSettedTemplate(userInfo, adminInfo),
+        MailTo = AdminEmail,
+        Subject = "Contraseña establecida por administrador - Cambio de contraseña"
+    });
 
     private string GetManagementUserPasswordSettedTemplate(UserInfo userInfo, (string name, string email) adminInfo)
     {
@@ -220,7 +218,7 @@ public class MailNotificator(IMyMailService mailService,
         template = template.Replace("{adminAccountName}", $"{adminInfo.name} ({adminInfo.email})");
         template = template.Replace("{userAccountName}", $"{userInfo.DisplayName} ({userInfo.Email})");
         template = template.Replace("{requestIp}", HttpContext.Connection.RemoteIpAddress.ToString());
-        var dateTime = DateTime.Now;
+        DateTime dateTime = DateTime.Now;
         template = template.Replace("{time}", dateTime.ToShortTimeString());
         template = template.Replace("{date}", dateTime.ToShortDateString());
         return template;

@@ -15,7 +15,7 @@ public static class AuthUtil
 
     public static SecureString GenerateEncryptedPassword(string username, ref string password, bool releasePassword = true)
     {
-        var ss = SecurityUtil.SecureString(SecurityUtil.B64HashEncrypt(username, password));
+        SecureString ss = SecurityUtil.SecureString(SecurityUtil.B64HashEncrypt(username, password));
         if (releasePassword)
         {
             SecurityUtil.ReleaseFromMemory(ref password);
@@ -35,7 +35,7 @@ public static class AuthUtil
 
         SecurityUtil.ReleaseFromMemory(ref password);
         b64Code.Clear();
-        var ss = SecurityUtil.SecureString(key);
+        SecureString ss = SecurityUtil.SecureString(key);
         SecurityUtil.ReleaseFromMemory(ref key);
         return ss;
     }

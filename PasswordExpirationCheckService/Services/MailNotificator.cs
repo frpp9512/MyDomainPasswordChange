@@ -26,21 +26,18 @@ public class MailNotificator : IMailNotificator
         _passwordManagement = passwordManagement;
     }
 
-    public async Task SendExpirationNotificationAsync(UserInfo userInfo, DateTime expirationDate)
+    public async Task SendExpirationNotificationAsync(UserInfo userInfo, DateTime expirationDate) => await _mailService.SendMailAsync(new MailRequest
     {
-        await _mailService.SendMailAsync(new MailRequest
-        {
-            Body = GetExpirationAlertMailTemplate(userInfo, expirationDate),
-            MailTo = userInfo.Email,
-            Subject = "Su contraseña expirará pronto - Cambio de contraseña",
-            Important = true
-        });
-    }
+        Body = GetExpirationAlertMailTemplate(userInfo, expirationDate),
+        MailTo = userInfo.Email,
+        Subject = "Su contraseña expirará pronto - Cambio de contraseña",
+        Important = true
+    });
 
     private string GetExpirationAlertMailTemplate(UserInfo userInfo, DateTime expirationDate)
     {
-        string templatePath = _configuration.GetValue<string>("emailTemplatePath");
-        string template = File.ReadAllText(templatePath);
+        var templatePath = _configuration.GetValue<string>("emailTemplatePath");
+        var template = File.ReadAllText(templatePath);
         template = template.Replace("{displayName}", userInfo.DisplayName);
         DateTime dateTime = DateTime.Now;
         template = template.Replace("{expirationDays}", (expirationDate - dateTime).Days.ToString());
@@ -49,43 +46,19 @@ public class MailNotificator : IMailNotificator
         return template;
     }
 
-    public Task SendChangePasswordNotificationAsync(string accountName)
-    {
-        throw new NotImplementedException();
-    }
+    public Task SendChangePasswordNotificationAsync(string accountName) => throw new NotImplementedException();
 
-    public Task SendChangePasswordAlertAsync(string accountName)
-    {
-        throw new NotImplementedException();
-    }
+    public Task SendChangePasswordAlertAsync(string accountName) => throw new NotImplementedException();
 
-    public Task SendChallengeAlertAsync()
-    {
-        throw new NotImplementedException();
-    }
+    public Task SendChallengeAlertAsync() => throw new NotImplementedException();
 
-    public Task SendBlacklistAlertAsync(string reason)
-    {
-        throw new NotImplementedException();
-    }
+    public Task SendBlacklistAlertAsync(string reason) => throw new NotImplementedException();
 
-    public Task SendManagementLoginFailAlertAsync()
-    {
-        throw new NotImplementedException();
-    }
+    public Task SendManagementLoginFailAlertAsync() => throw new NotImplementedException();
 
-    public Task SendManagementLogin(UserInfo userInfo)
-    {
-        throw new NotImplementedException();
-    }
+    public Task SendManagementLogin(UserInfo userInfo) => throw new NotImplementedException();
 
-    public Task SendManagementUserPasswordResetted(UserInfo userInfo, (string name, string email) adminInfo)
-    {
-        throw new NotImplementedException();
-    }
+    public Task SendManagementUserPasswordResetted(UserInfo userInfo, (string name, string email) adminInfo) => throw new NotImplementedException();
 
-    public Task SendManagementUserPasswordSetted(UserInfo userInfo, (string name, string email) adminInfo)
-    {
-        throw new NotImplementedException();
-    }
+    public Task SendManagementUserPasswordSetted(UserInfo userInfo, (string name, string email) adminInfo) => throw new NotImplementedException();
 }

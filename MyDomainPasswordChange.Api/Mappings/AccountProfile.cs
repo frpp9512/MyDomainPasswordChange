@@ -9,10 +9,10 @@ public class AccountProfile : Profile
 {
     public AccountProfile()
     {
-        CreateMap<Account, UserInfo>().ReverseMap();
-        CreateMap<AccountDto, UserInfo>().ReverseMap();
-        CreateMap<CreateAccountDto, UserInfo>().ReverseMap();
-        CreateMap<Group, GroupInfo>().ReverseMap();
-        CreateMap<GroupInfo, GroupInfoDto>().ReverseMap();
+        _ = CreateMap<Account, UserInfo>().ReverseMap();
+        _ = CreateMap<AccountDto, UserInfo>().ReverseMap();
+        _ = CreateMap<CreateAccountDto, UserInfo>().ReverseMap();
+        _ = CreateMap<Group, GroupInfo>().ReverseMap();
+        _ = CreateMap<GroupInfo, GroupInfoDto>().ReverseMap();
     }
 }

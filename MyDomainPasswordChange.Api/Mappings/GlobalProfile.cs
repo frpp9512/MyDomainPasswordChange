@@ -8,7 +8,7 @@ public class GlobalProfile : Profile
 {
     public GlobalProfile()
     {
-        CreateMap<DependencyDefinition, DependencyDto>().ForMember(d => d.Areas, opt => opt.MapFrom(d => d.AreaDefinitions));
-        CreateMap<AreaDefinition, AreaDto>();
+        _ = CreateMap<DependencyDefinition, DependencyDto>().ForMember(d => d.Areas, opt => opt.MapFrom(d => d.AreaDefinitions));
+        _ = CreateMap<AreaDefinition, AreaDto>();
     }
 }

@@ -3,8 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using MyDomainPasswordChange.Management.Interfaces;
 using MyDomainPasswordChange.Management.Managers;
 using MyDomainPasswordChange.Management.Models;
-using MyDomainPasswordChange.Managers.Services;
-using System.Configuration;
 
 namespace MyDomainPasswordChange.Managers.Helpers;
 
@@ -20,7 +18,7 @@ public static class PasswordManagementHelpers
     /// <returns>The configured dependency injection container.</returns>
     public static IServiceCollection AddPasswordManagement(this IServiceCollection services)
     {
-        var configuration = services.BuildServiceProvider().GetService<IConfiguration>();
+        IConfiguration configuration = services.BuildServiceProvider().GetService<IConfiguration>();
         _ = services.Configure<LdapConnectionConfiguration>(configuration.GetSection("LdapConnectionConfiguration"));
         _ = services.AddTransient<IDomainPasswordManagement, MyDomainPasswordManagement>();
         return services;

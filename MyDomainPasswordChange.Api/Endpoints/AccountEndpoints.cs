@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using MyDomainPasswordChange.Api.Authorization.Helpers;
 using MyDomainPasswordChange.Api.Models;
 using MyDomainPasswordChange.Management.Excepetions;
 using MyDomainPasswordChange.Management.Interfaces;
@@ -19,18 +20,18 @@ public static class AccountEndpoints
 {
     public static WebApplication MapAccountEndpoints(this WebApplication app)
     {
-        var accountGroup = app.MapGroup("/account")
+        RouteGroupBuilder accountGroup = app.MapGroup("/account")
             .WithDisplayName("Account management")
             .WithDescription("Endpoints for accounts management");
 
         _ = accountGroup.MapGet("{accountName}", GetAccountInfoAsync)
-                        .RequireAuthorization("Domain Admins");
+                        .RequireAuthorization(AuthorizationConstants.Policies.DOMAIN_ADMINS_POLICY);
 
         _ = accountGroup.MapPut("", CreateAccountAsync)
-                        .RequireAuthorization("Domain Admins");
+                        .RequireAuthorization(AuthorizationConstants.Policies.DOMAIN_ADMINS_POLICY);
 
         _ = accountGroup.MapDelete("{accountName}", DeleteAccountAsync)
-                        .RequireAuthorization("Domain Admins");
+                        .RequireAuthorization(AuthorizationConstants.Policies.DOMAIN_ADMINS_POLICY);
 
         _ = accountGroup.MapGet("image/{accountName}", GetAccountImageAsync)
                         .WithName("GetAccountImage")
@@ -38,7 +39,7 @@ public static class AccountEndpoints
 
         _ = accountGroup.MapPut("image/{accountName}", SetAccountImageAsync)
                         .WithName("SetAccountImage")
-                        .RequireAuthorization("Domain Admins")
+                        .RequireAuthorization(AuthorizationConstants.Policies.DOMAIN_ADMINS_POLICY)
                         .Produces(403)
                         .Produces(200, contentType: "application/json")
                         .DisableAntiforgery();
@@ -46,8 +47,8 @@ public static class AccountEndpoints
         _ = accountGroup.MapPost("auth", AuthAccount)
                         .AllowAnonymous();
 
-        var accountsGroup = app.MapGroup("/accounts")
-                               .RequireAuthorization("Localized Domain Admins");
+        RouteGroupBuilder accountsGroup = app.MapGroup("/accounts")
+                               .RequireAuthorization(AuthorizationConstants.Policies.LOCALIZED_DOMAIN_ADMINS_POLICY);
 
         _ = accountsGroup.MapGet("", GetAccountsAsync);
         _ = accountsGroup.MapGet("{dependencyId}", GetAccountsForDependencyAsync);
@@ -60,12 +61,12 @@ public static class AccountEndpoints
                                                            IMapper mapper,
                                                            ILoggerFactory loggerFactory)
     {
-        var logger = loggerFactory.CreateLogger("AccountInfo");
+        ILogger logger = loggerFactory.CreateLogger("AccountInfo");
         logger.LogInformation("Requested info for account: {accountName}", accountName);
         try
         {
-            var userInfo = await passwordManagement.GetUserInfoAsync(accountName);
-            var dto = mapper.Map<AccountDto>(userInfo);
+            UserInfo userInfo = await passwordManagement.GetUserInfoAsync(accountName);
+            AccountDto dto = mapper.Map<AccountDto>(userInfo);
             return Results.Ok(dto);
         }
         catch (BadPasswordException ex)
@@ -105,9 +106,9 @@ public static class AccountEndpoints
                                                           ILoggerFactory loggerFactory)
     {
         ArgumentNullException.ThrowIfNull(newAccount, nameof(newAccount));
-        var logger = loggerFactory.CreateLogger("CreateAccount");
-        var dependenciesConfig = depConfigOptions.Value;
-        var defaultAccountConfig = defaultAccountConfigOptions.Value;
+        ILogger logger = loggerFactory.CreateLogger("CreateAccount");
+        DependenciesConfiguration dependenciesConfig = depConfigOptions.Value;
+        DefaultAccountConfiguration defaultAccountConfig = defaultAccountConfigOptions.Value;
         try
         {
             if (passwordManagement.UserExists(newAccount.AccountName))
@@ -115,7 +116,7 @@ public static class AccountEndpoints
                 return Results.Conflict(new ErrorResponseDto(StatusCodes.Status409Conflict, "AccountExists", "", new() { { "AccountName", newAccount.AccountName } }));
             }
 
-            var userInfo = mapper.Map<UserInfo>(newAccount);
+            UserInfo userInfo = mapper.Map<UserInfo>(newAccount);
             userInfo.MailboxCapacity = defaultAccountConfig.DefaultMailBoxSize;
             userInfo = userInfo with
             {
@@ -137,7 +138,7 @@ public static class AccountEndpoints
                 ));
             }
 
-            var dependency = dependenciesConfig[newAccount.DependencyId];
+            DependencyDefinition dependency = dependenciesConfig[newAccount.DependencyId];
 
             if (!dependency.ExistsArea(newAccount.AreaId))
             {
@@ -152,7 +153,7 @@ public static class AccountEndpoints
                 ));
             }
 
-            var area = dependency[newAccount.AreaId];
+            AreaDefinition area = dependency[newAccount.AreaId];
 
             if (!newAccount.GroupsId.Contains(dependency.GroupName))
             {
@@ -167,8 +168,8 @@ public static class AccountEndpoints
             if (await passwordManagement.CreateNewUserAsync(userInfo, newAccount.Password, dependency.OU, area.OU, newAccount.GroupsId))
             {
                 logger.LogInformation("Account {accountName} created successfully in dependency {dependencyId} and area {areaId}.", newAccount.AccountName, newAccount.DependencyId, newAccount.AreaId);
-                var createdUserInfo = await passwordManagement.GetUserInfo(newAccount.AccountName);
-                var dto = mapper.Map<AccountDto>(createdUserInfo);
+                UserInfo createdUserInfo = await passwordManagement.GetUserInfo(newAccount.AccountName);
+                AccountDto dto = mapper.Map<AccountDto>(createdUserInfo);
                 return Results.Created(new Uri($"{context.Request.Scheme}://{context.Request.Host}/account/{newAccount.AccountName}"), dto);
             }
         }
@@ -199,7 +200,7 @@ public static class AccountEndpoints
                                                             ILoggerFactory loggerFactory,
                                                             IDomainPasswordManagement passwordManagement)
     {
-        var logger = loggerFactory.CreateLogger("GetAccountImage");
+        ILogger logger = loggerFactory.CreateLogger("GetAccountImage");
         logger.LogInformation("Requested the image for account: {accountName}", accountName);
         try
         {
@@ -209,7 +210,7 @@ public static class AccountEndpoints
                 logger.LogWarning("The account {accountName} have not image.", accountName);
                 return Results.NotFound(new ErrorResponseDto(StatusCodes.Status404NotFound, "AccountHaveNoImage", $"The account {accountName} have not image.", new() { { "accountName", accountName } }));
             }
-            
+
             return Results.File(picture, "image/jpg", $"{accountName}_picture.jpg");
         }
         catch (UserNotFoundException ex)
@@ -250,12 +251,12 @@ public static class AccountEndpoints
                                                             ILoggerFactory loggerFactory,
                                                             IDomainPasswordManagement passwordManagement)
     {
-        var logger = loggerFactory.CreateLogger("SetAccountImage");
+        ILogger logger = loggerFactory.CreateLogger("SetAccountImage");
         logger.LogInformation("Requested set the image for account: {accountName}", accountName);
         try
         {
             byte[] fileBytes;
-            using (var memoryStream = new MemoryStream())
+            using (MemoryStream memoryStream = new())
             {
                 await imageFile.CopyToAsync(memoryStream);
                 try
@@ -268,7 +269,7 @@ public static class AccountEndpoints
                         image = ResizeImage(image, 90, 90);
                     }
 
-                    using var resizedImageMemoryStream = new MemoryStream();
+                    using MemoryStream resizedImageMemoryStream = new();
                     image.Save(resizedImageMemoryStream, ImageFormat.Jpeg);
                     fileBytes = resizedImageMemoryStream.ToArray();
                 }
@@ -322,8 +323,8 @@ public static class AccountEndpoints
 
     private static Bitmap ResizeImage(Image image, int width, int height)
     {
-        var destRect = new Rectangle(0, 0, width, height);
-        var destImage = new Bitmap(width, height);
+        Rectangle destRect = new(0, 0, width, height);
+        Bitmap destImage = new(width, height);
         destImage.SetResolution(image.HorizontalResolution, image.VerticalResolution);
         using (var graphics = Graphics.FromImage(destImage))
         {
@@ -332,7 +333,7 @@ public static class AccountEndpoints
             graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
             graphics.SmoothingMode = SmoothingMode.HighQuality;
             graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
-            using var wrapMode = new ImageAttributes();
+            using ImageAttributes wrapMode = new();
             wrapMode.SetWrapMode(WrapMode.TileFlipXY);
             graphics.DrawImage(image, destRect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, wrapMode);
         }
@@ -345,7 +346,7 @@ public static class AccountEndpoints
                                               ILoggerFactory loggerFactory)
     {
         ArgumentException.ThrowIfNullOrEmpty(accountName, nameof(accountName));
-        var logger = loggerFactory.CreateLogger("DeleteAccount");
+        ILogger logger = loggerFactory.CreateLogger("DeleteAccount");
         logger.LogInformation("Requested delete the account {accountName}", accountName);
         try
         {
@@ -385,7 +386,7 @@ public static class AccountEndpoints
                                        IDomainPasswordManagement passwordManagement,
                                        ILoggerFactory loggerFactory)
     {
-        var logger = loggerFactory.CreateLogger("AccountAuth");
+        ILogger logger = loggerFactory.CreateLogger("AccountAuth");
         logger.LogInformation("Requested authentication for account {accountName}", accountAuthRequest.AccountName);
         try
         {
@@ -434,9 +435,9 @@ public static class AccountEndpoints
                                                                      ILoggerFactory loggerFactory)
     {
         ArgumentException.ThrowIfNullOrEmpty(dependencyId, nameof(dependencyId));
-        var logger = loggerFactory.CreateLogger("GetAccountsForDependency");
+        ILogger logger = loggerFactory.CreateLogger("GetAccountsForDependency");
         logger.LogInformation("Requested account list for dependency {dependency}", dependencyId);
-        var dependenciesConfig = depConfigOptions.Value;
+        DependenciesConfiguration dependenciesConfig = depConfigOptions.Value;
         try
         {
             if (!dependenciesConfig.ExistDependency(dependencyId))
@@ -452,11 +453,11 @@ public static class AccountEndpoints
                 ));
             }
 
-            var dependency = dependenciesConfig[dependencyId];
-            var group = await passwordManagement.GetGroupInfoByNameAsync(dependencyId);
-            var accounts = await passwordManagement.GetActiveUsersInfoFromGroupAsync(group);
+            DependencyDefinition dependency = dependenciesConfig[dependencyId];
+            GroupInfo group = await passwordManagement.GetGroupInfoByNameAsync(dependencyId);
+            List<UserInfo> accounts = await passwordManagement.GetActiveUsersInfoFromGroupAsync(group);
 
-            var dto = new AccountsListDto
+            AccountsListDto dto = new()
             {
                 GroupInfo = mapper.Map<GroupInfoDto>(group),
                 Accounts = areaId is null
@@ -495,27 +496,27 @@ public static class AccountEndpoints
                                                         IMapper mapper,
                                                         ILoggerFactory loggerFactory)
     {
-        var logger = loggerFactory.CreateLogger("GetAccounts");
+        ILogger logger = loggerFactory.CreateLogger("GetAccounts");
         logger.LogInformation("Requested account list of accounts of all dependencies.");
-        var dependenciesConfig = depConfigOptions.Value;
+        DependenciesConfiguration dependenciesConfig = depConfigOptions.Value;
         try
         {
             List<GroupInfo> groups = [];
-            foreach (var groupDefinition in dependenciesConfig.Definitions)
+            foreach (DependencyDefinition groupDefinition in dependenciesConfig.Definitions)
             {
                 if (groupDefinition.Type == "global" && includeGlobal is null or false)
                 {
                     continue;
                 }
 
-                var group = await passwordManagement.GetGroupInfoByNameAsync(groupDefinition.GroupName);
+                GroupInfo group = await passwordManagement.GetGroupInfoByNameAsync(groupDefinition.GroupName);
                 groups.Add(group);
             }
 
             List<(GroupInfo depGroup, List<UserInfo> accounts)> groupAccounts = [];
-            foreach (var depGroup in groups)
+            foreach (GroupInfo depGroup in groups)
             {
-                var accounts = await passwordManagement.GetActiveUsersInfoFromGroupAsync(depGroup);
+                List<UserInfo> accounts = await passwordManagement.GetActiveUsersInfoFromGroupAsync(depGroup);
                 groupAccounts.Add((depGroup, accounts));
             }
 

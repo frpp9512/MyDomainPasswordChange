@@ -47,8 +47,8 @@ public class MyMailService : IMyMailService
             return;
         }
 
-        var settings = _settingsProvider.GetMailSettings();
-        var now = DateTime.Now;
+        MailSettings settings = _settingsProvider.GetMailSettings();
+        DateTime now = DateTime.Now;
         if ((now - _lastEmailSent).TotalSeconds <= settings.MailIntervalInSeconds * 1.30)
         {
             return;
@@ -81,7 +81,7 @@ public class MyMailService : IMyMailService
     /// <returns></returns>
     private async Task SendMail(MailRequest request)
     {
-        var email = new MimeMessage
+        MimeMessage email = new()
         {
             Sender = MailboxAddress.Parse(_settings.MailAddress),
             Subject = request.Subject,
@@ -93,7 +93,7 @@ public class MyMailService : IMyMailService
             email.Cc.Add(MailboxAddress.Parse(request.Cc));
         }
 
-        var builder = new BodyBuilder
+        BodyBuilder builder = new()
         {
             HtmlBody = request.Body
         };
@@ -103,7 +103,7 @@ public class MyMailService : IMyMailService
             email.Importance = MessageImportance.High;
         }
 
-        using var smtp = new SmtpClient
+        using SmtpClient smtp = new()
         {
             ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true
         };

@@ -22,7 +22,7 @@ public static class DataExtensions
         var connectionString = services.BuildServiceProvider()
                                        .GetService<IConfiguration>()
                                        .GetConnectionString("Sqlite");
-        var dataContext = new SqliteDataContext(connectionString);
+        SqliteDataContext dataContext = new(connectionString);
         _ = services.AddSingleton<DataContext>(dataContext);
         return services;
     }

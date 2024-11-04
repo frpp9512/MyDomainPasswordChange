@@ -15,21 +15,21 @@ public static class PasswordEndpoints
 {
     public static WebApplication MapPasswordEndpoints(this WebApplication app)
     {
-        var passwordGroup = app.MapGroup("/password")
+        RouteGroupBuilder passwordGroup = app.MapGroup("/password")
             .WithDisplayName("Password management")
             .WithDescription("Endpoints for password managements.");
 
-        passwordGroup.MapPost("change", ChangeAccountPasswordAsync)
+        _ = passwordGroup.MapPost("change", ChangeAccountPasswordAsync)
             .WithName("Change password")
             .WithDisplayName("Change account password")
             .WithDescription("Changes the password of an account.");
 
-        passwordGroup.MapPost("set", SetAccountPasswordAsync)
+        _ = passwordGroup.MapPost("set", SetAccountPasswordAsync)
             .WithName("Set password")
             .WithDisplayName("Set the account password")
             .WithDescription("Set the password of an account.");
 
-        passwordGroup.MapPost("reset", ResetAccountPasswordAsync)
+        _ = passwordGroup.MapPost("reset", ResetAccountPasswordAsync)
             .WithName("Reset password")
             .WithDisplayName("Reset account password")
             .WithDescription("Reset the password of an account for a temporary default one.");
@@ -45,7 +45,7 @@ public static class PasswordEndpoints
                                                                  ILoggerFactory loggerFactory)
     {
         ArgumentNullException.ThrowIfNull(nameof(changePasswordRequest));
-        var logger = loggerFactory.CreateLogger("ChangePassword");
+        ILogger logger = loggerFactory.CreateLogger("ChangePassword");
         logger.LogInformation("Requested change password for account: {accountName}", changePasswordRequest.AccountName);
         try
         {
@@ -67,7 +67,7 @@ public static class PasswordEndpoints
             await _historyManager.RegisterPasswordAsync(changePasswordRequest.AccountName, changePasswordRequest.NewPassword);
             logger.LogInformation("New user password registered in history successfully for account {accountName}.", changePasswordRequest.AccountName);
 
-            var userInfo = await passwordManagement.GetUserInfo(changePasswordRequest.AccountName);
+            Management.Models.UserInfo userInfo = await passwordManagement.GetUserInfo(changePasswordRequest.AccountName);
             logger.LogInformation("Retrieving user info for account {accountName}.", changePasswordRequest.AccountName);
 
             logger.LogInformation("Sending change password notification mail for {accountName}.", changePasswordRequest.AccountName);
@@ -118,7 +118,7 @@ public static class PasswordEndpoints
                                                               ILoggerFactory loggerFactory)
     {
         ArgumentNullException.ThrowIfNull(nameof(setPasswordRequest));
-        var logger = loggerFactory.CreateLogger("ChangePassword");
+        ILogger logger = loggerFactory.CreateLogger("ChangePassword");
         logger.LogInformation("Requested set password for account: {accountName}", setPasswordRequest.AccountName);
         try
         {
@@ -134,7 +134,7 @@ public static class PasswordEndpoints
             await _historyManager.RegisterPasswordAsync(setPasswordRequest.AccountName, setPasswordRequest.NewPassword);
             logger.LogInformation("New user password registered in history successfully for account {accountName}.", setPasswordRequest.AccountName);
 
-            var userInfo = await passwordManagement.GetUserInfo(setPasswordRequest.AccountName);
+            Management.Models.UserInfo userInfo = await passwordManagement.GetUserInfo(setPasswordRequest.AccountName);
             logger.LogInformation("Retrieving user info for account {accountName}.", setPasswordRequest.AccountName);
 
             //logger.LogInformation("Sending change password notification mail for {accountName}.", setPasswordRequest.AccountName);
@@ -187,7 +187,7 @@ public static class PasswordEndpoints
                                                                 ILoggerFactory loggerFactory)
     {
         ArgumentNullException.ThrowIfNull(nameof(resetPasswordRequest));
-        var logger = loggerFactory.CreateLogger("ResetPassword");
+        ILogger logger = loggerFactory.CreateLogger("ResetPassword");
         try
         {
             if (!passwordManagement.AuthenticateUser(resetPasswordRequest.AccountName, resetPasswordRequest.CurrentPassword))
@@ -197,7 +197,7 @@ public static class PasswordEndpoints
 
             logger.LogInformation("Requested reset password for account: {accountName}", resetPasswordRequest.AccountName);
             passwordManagement.ResetPassword(resetPasswordRequest.AccountName, resetPasswordRequest.TempPassword);
-            var userInfo = await passwordManagement.GetUserInfo(resetPasswordRequest.AccountName);
+            Management.Models.UserInfo userInfo = await passwordManagement.GetUserInfo(resetPasswordRequest.AccountName);
             await mailNotificator.SendManagementUserPasswordResetted(
                         userInfo,
                         (AdminInfoConfiguration.Value.Name, AdminInfoConfiguration.Value.Email));

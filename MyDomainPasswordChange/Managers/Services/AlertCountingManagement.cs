@@ -43,6 +43,7 @@ public class AlertCountingManagement(IHttpContextAccessor contextAccessor,
                                             GetBadChallengeTriesAlarm(),
                                             async (key, tries) => await _notificator.SendChallengeAlertAsync());
         }
+
         if ((DateTime.Now - _counterManager.GetCounterLastCount(counterAlertKey)).TotalMinutes > _alarmRefresh)
         {
             _counterManager.ResetCounter(counterAlertKey);

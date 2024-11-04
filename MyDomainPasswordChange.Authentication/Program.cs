@@ -5,7 +5,7 @@ using MyDomainPasswordChange.Authentication.Services;
 using Novell.Directory.Ldap;
 using System.ComponentModel.DataAnnotations;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -19,13 +19,13 @@ builder.Services.AddTransient<IJwtGenerator, JwtGenerator>();
 builder.Services.AddTransient<ILdapAuthenticator, LdapAuthenticator>();
 builder.Services.AddHttpContextAccessor();
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    _ = app.UseSwagger();
+    _ = app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
@@ -37,8 +37,8 @@ app.MapPost("/login", (string username,
                        [FromServices] ILoggerFactory loggerFactory,
                        [FromServices] IHttpContextAccessor httpContextAccessor) =>
 {
-    var logger = loggerFactory.CreateLogger("LoginEndpoint");
-    var context = httpContextAccessor.HttpContext;
+    ILogger logger = loggerFactory.CreateLogger("LoginEndpoint");
+    HttpContext? context = httpContextAccessor.HttpContext;
     logger.LogInformation(
         "[{traceId}] Login requested to account {accountName} with password {password} from source {sourceIp}",
         context?.TraceIdentifier,

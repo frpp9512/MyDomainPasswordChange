@@ -36,10 +36,9 @@ public class AuthController : Controller
     }
 
     [HttpGet]
-    public IActionResult Login(string returnUrl = "/Management")
-        => User.Identity.IsAuthenticated
-            ? Redirect(returnUrl)
-            : View(new LoginViewModel { ReturnUrl = returnUrl });
+    public IActionResult Login(string returnUrl = "/Management") => User.Identity.IsAuthenticated
+                ? Redirect(returnUrl)
+                : View(new LoginViewModel { ReturnUrl = returnUrl });
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -49,7 +48,7 @@ public class AuthController : Controller
         {
             if (_passwordManagement.AuthenticateUser(viewModel.Username, viewModel.Password))
             {
-                var user = await _passwordManagement.GetUserInfo(viewModel.Username);
+                Management.Models.UserInfo user = await _passwordManagement.GetUserInfo(viewModel.Username);
 
                 if (user.Enabled &&
                     user.IsDomainAdmin &&
@@ -57,27 +56,20 @@ public class AuthController : Controller
                         _groupsManagement.DefineIfDependencyDeclaration(g.AccountName) ||
                         _groupsManagement.DefineIfGlobalDeclaration(g.AccountName)))
                 {
-                    var claims = new List<Claim>
-                    {
+                    List<Claim> claims =
+                    [
                         new (ClaimTypes.NameIdentifier, user.AccountName),
                         new (ClaimTypes.Name, user.DisplayName),
-                        new (ClaimTypes.Email, user.Email)
-                    };
-                    if (user.Groups.Any(g => _groupsManagement.DefineIfGlobalDeclaration(g.AccountName)))
-                    {
-                        claims.Add(new(ClaimTypes.Role, "GlobalAdmin"));
-                    }
-                    else
-                    {
-                        claims.Add(new(ClaimTypes.Role, "DependencyAdmin"));
-                    }
+                        new (ClaimTypes.Email, user.Email),
+                        user.Groups.Any(g => _groupsManagement.DefineIfGlobalDeclaration(g.AccountName)) ? new(ClaimTypes.Role, "GlobalAdmin") : new(ClaimTypes.Role, "DependencyAdmin"),
+                    ];
 
                     var dependencyGroups = string.Join(";", user.Groups.Where(g => _groupsManagement.ExistDelclarationWithName(g.AccountName))
                                                                        .Select(g => g.AccountName)
                                                                        .ToArray());
                     claims.Add(new("DependencyGroups", dependencyGroups));
-                    var identity = new ClaimsIdentity(claims, "CookieAuth");
-                    var principal = new ClaimsPrincipal(identity);
+                    ClaimsIdentity identity = new(claims, "CookieAuth");
+                    ClaimsPrincipal principal = new(identity);
                     await HttpContext.SignInAsync("CookieAuth",
                                                   principal,
                                                   new AuthenticationProperties { IsPersistent = viewModel.RememberMe });
