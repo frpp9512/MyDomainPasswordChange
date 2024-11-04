@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Options;
 using MyDomainPasswordChange.Api.Models;
 using MyDomainPasswordChange.Data.Interfaces;
@@ -39,11 +38,11 @@ public static class PasswordEndpoints
     }
 
     public static async Task<IResult> ChangeAccountPasswordAsync(ChangePasswordRequestDto changePasswordRequest,
-                                                           IDomainPasswordManagement passwordManagement,
-                                                           IPasswordHistoryManager _historyManager,
-                                                           IOptions<PasswordHistoryConfiguration> passwordHistoryConfiguration,
-                                                           IMailNotificator mailNotificator,
-                                                           ILoggerFactory loggerFactory)
+                                                                 IDomainPasswordManagement passwordManagement,
+                                                                 IPasswordHistoryManager _historyManager,
+                                                                 IOptions<PasswordHistoryConfiguration> passwordHistoryConfiguration,
+                                                                 IMailNotificator mailNotificator,
+                                                                 ILoggerFactory loggerFactory)
     {
         ArgumentNullException.ThrowIfNull(nameof(changePasswordRequest));
         var logger = loggerFactory.CreateLogger("ChangePassword");

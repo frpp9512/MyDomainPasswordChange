@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using MyDomainPasswordChange.Api.Models;
 using MyDomainPasswordChange.Management.Excepetions;
@@ -8,6 +9,9 @@ using MyDomainPasswordChange.Shared.DTO;
 using System.DirectoryServices.AccountManagement;
 using System.DirectoryServices.ActiveDirectory;
 using System.DirectoryServices.Protocols;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 
 namespace MyDomainPasswordChange.Api.Endpoints;
 
@@ -19,13 +23,31 @@ public static class AccountEndpoints
             .WithDisplayName("Account management")
             .WithDescription("Endpoints for accounts management");
 
-        _ = accountGroup.MapGet("{accountName}", GetAccountInfoAsync);
-        _ = accountGroup.MapPut("", CreateAccountAsync);
-        _ = accountGroup.MapDelete("{accountName}", DeleteAccountAsync);
-        _ = accountGroup.MapGet("image/{accountName}", GetAccountImageAsync);
-        _ = accountGroup.MapPost("auth", AuthAccount);
+        _ = accountGroup.MapGet("{accountName}", GetAccountInfoAsync)
+                        .RequireAuthorization("Domain Admins");
 
-        var accountsGroup = app.MapGroup("/accounts");
+        _ = accountGroup.MapPut("", CreateAccountAsync)
+                        .RequireAuthorization("Domain Admins");
+
+        _ = accountGroup.MapDelete("{accountName}", DeleteAccountAsync)
+                        .RequireAuthorization("Domain Admins");
+
+        _ = accountGroup.MapGet("image/{accountName}", GetAccountImageAsync)
+                        .WithName("GetAccountImage")
+                        .AllowAnonymous();
+
+        _ = accountGroup.MapPut("image/{accountName}", SetAccountImageAsync)
+                        .WithName("SetAccountImage")
+                        .RequireAuthorization("Domain Admins")
+                        .Produces(403)
+                        .Produces(200, contentType: "application/json")
+                        .DisableAntiforgery();
+
+        _ = accountGroup.MapPost("auth", AuthAccount)
+                        .AllowAnonymous();
+
+        var accountsGroup = app.MapGroup("/accounts")
+                               .RequireAuthorization("Localized Domain Admins");
 
         _ = accountsGroup.MapGet("", GetAccountsAsync);
         _ = accountsGroup.MapGet("{dependencyId}", GetAccountsForDependencyAsync);
@@ -187,7 +209,7 @@ public static class AccountEndpoints
                 logger.LogWarning("The account {accountName} have not image.", accountName);
                 return Results.NotFound(new ErrorResponseDto(StatusCodes.Status404NotFound, "AccountHaveNoImage", $"The account {accountName} have not image.", new() { { "accountName", accountName } }));
             }
-
+            
             return Results.File(picture, "image/jpg", $"{accountName}_picture.jpg");
         }
         catch (UserNotFoundException ex)
@@ -221,6 +243,101 @@ public static class AccountEndpoints
         }
 
         return Results.Problem();
+    }
+
+    private static async Task<IResult> SetAccountImageAsync([FromRoute] string accountName,
+                                                            IFormFile imageFile,
+                                                            ILoggerFactory loggerFactory,
+                                                            IDomainPasswordManagement passwordManagement)
+    {
+        var logger = loggerFactory.CreateLogger("SetAccountImage");
+        logger.LogInformation("Requested set the image for account: {accountName}", accountName);
+        try
+        {
+            byte[] fileBytes;
+            using (var memoryStream = new MemoryStream())
+            {
+                await imageFile.CopyToAsync(memoryStream);
+                try
+                {
+                    var image = Image.FromStream(memoryStream);
+                    fileBytes = memoryStream.ToArray();
+                    if (fileBytes.Length > (1024 * 100))
+                    {
+                        logger.LogInformation("The image was too big it will be resized.");
+                        image = ResizeImage(image, 90, 90);
+                    }
+
+                    using var resizedImageMemoryStream = new MemoryStream();
+                    image.Save(resizedImageMemoryStream, ImageFormat.Jpeg);
+                    fileBytes = resizedImageMemoryStream.ToArray();
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError("Error processing the image. Error message: {errorMessage}", ex.Message);
+                    return Results.Problem(new()
+                    {
+                        Title = "Invalid image",
+                        Detail = $"The provided account image is invalid.",
+                        Extensions = { { "ErrorCode", "InvalidAccountImage" } }
+                    });
+                }
+            }
+
+            await passwordManagement.SetUserImageAsync(accountName, fileBytes);
+            return Results.CreatedAtRoute($"GetAccountImage");
+        }
+        catch (UserNotFoundException ex)
+        {
+            logger.LogError("The account {accountName} was not found.", accountName);
+            return Results.BadRequest(new ErrorResponseDto(StatusCodes.Status400BadRequest, "AccountNotFound", $"The account {accountName} was not found. Error message: {ex.Message}", new() { { "accountName", accountName } }));
+        }
+        catch (BadPasswordException ex)
+        {
+            logger.LogError("Error on password. Error message: {errorMessage}", ex.Message);
+            return Results.Problem(new()
+            {
+                Title = "Password error",
+                Detail = $"An error occurred when binding with default account.",
+                Extensions = { { "ErrorCode", "ChangePasswordError" } }
+            });
+        }
+        catch (Exception ex) when (ex is PrincipalServerDownException or LdapException or ActiveDirectoryServerDownException)
+        {
+            logger.LogError("Error connecting to the LDAP server. Error message: {errorMessage}", ex.Message);
+            return Results.Problem(new()
+            {
+                Title = "LDAP connection error",
+                Detail = $"An error occurred when connecting to the LDAP server.",
+                Extensions = { { "ErrorCode", "LDAPError" } }
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError("General error. Error message: {errorMessage}", ex.Message);
+        }
+
+        return Results.Problem();
+    }
+
+    private static Bitmap ResizeImage(Image image, int width, int height)
+    {
+        var destRect = new Rectangle(0, 0, width, height);
+        var destImage = new Bitmap(width, height);
+        destImage.SetResolution(image.HorizontalResolution, image.VerticalResolution);
+        using (var graphics = Graphics.FromImage(destImage))
+        {
+            graphics.CompositingMode = CompositingMode.SourceCopy;
+            graphics.CompositingQuality = CompositingQuality.HighQuality;
+            graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            graphics.SmoothingMode = SmoothingMode.HighQuality;
+            graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            using var wrapMode = new ImageAttributes();
+            wrapMode.SetWrapMode(WrapMode.TileFlipXY);
+            graphics.DrawImage(image, destRect, 0, 0, image.Width, image.Height, GraphicsUnit.Pixel, wrapMode);
+        }
+
+        return destImage;
     }
 
     private static IResult DeleteAccountAsync(string accountName,

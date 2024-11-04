@@ -8,7 +8,13 @@ public class MailSettingsProvider : IMailSettingsProvider
 {
     private readonly IConfiguration _configuration;
 
-    public MailSettingsProvider(IConfiguration configuration) => _configuration = configuration;
+    public MailSettingsProvider(IConfiguration configuration)
+    {
+        _configuration = configuration;
+    }
 
-    public MailSettings GetMailSettings() => _configuration.GetSection("MailSettings").Get<MailSettings>();
+    public MailSettings GetMailSettings()
+    {
+        return _configuration.GetSection("MailSettings").Get<MailSettings>();
+    }
 }

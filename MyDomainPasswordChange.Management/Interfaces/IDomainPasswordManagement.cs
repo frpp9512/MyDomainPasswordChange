@@ -21,4 +21,5 @@ public interface IDomainPasswordManagement
     Task<byte[]> GetUserImageBytesAsync(string accountName);
     Task<bool> CreateNewUserAsync(UserInfo userInfo, string password, string dependecyOU, string areaOU, params string[] groups);
     void DeleteAccount(string accountName);
+    Task SetUserImageAsync(string accountName, byte[] image);
 }

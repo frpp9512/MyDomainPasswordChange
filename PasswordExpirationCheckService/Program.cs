@@ -10,20 +10,24 @@ namespace PasswordExpirationCheckService;
 
 public class Program
 {
-    public static void Main(string[] args) => CreateHostBuilder(args).Build().Run();
+    public static void Main(string[] args)
+    {
+        CreateHostBuilder(args).Build().Run();
+    }
 
-    public static IHostBuilder CreateHostBuilder(string[] args) =>
-        Host.CreateDefaultBuilder(args)
+    public static IHostBuilder CreateHostBuilder(string[] args)
+    {
+        return Host.CreateDefaultBuilder(args)
             .UseWindowsService(configure => configure.ServiceName = "PasswordExpirationCheck")
             .ConfigureServices((hostContext, services) =>
             {
-                var config = services.BuildServiceProvider().GetService<IConfiguration>();
+                IConfiguration config = services.BuildServiceProvider().GetService<IConfiguration>();
                 _ = services.Configure<LdapConnectionConfiguration>(config.GetSection("LdapConnectionConfiguration"));
                 _ = services.AddTransient<MyDomainPasswordManagement>();
                 _ = services.AddTransient<IMailSettingsProvider, MailSettingsProvider>();
                 _ = services.AddSingleton<IMyMailService, MyMailService>();
                 _ = services.AddTransient<IMailNotificator, MailNotificator>();
                 _ = services.AddHostedService<Worker>();
-
             });
+    }
 }

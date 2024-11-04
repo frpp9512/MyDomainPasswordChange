@@ -126,6 +126,7 @@ public class MyDomainPasswordManagement(IOptions<LdapConnectionConfiguration> co
                                                _connectionOptions.LdapSearchBase,
                                                _connectionOptions.LdapBindUsername,
                                                _connectionOptions.LdapBindPassword);
+
     /// <summary>
     /// Determines if exists an user account with the provided name.
     /// </summary>
@@ -399,6 +400,21 @@ public class MyDomainPasswordManagement(IOptions<LdapConnectionConfiguration> co
         return userEntry.Properties[LdapAttributesConstants.JPEG_PHOTO].Value != null
             ? userEntry.Properties[LdapAttributesConstants.JPEG_PHOTO].Value as byte[]
             : null;
+    }
+
+    public async Task SetUserImageAsync(string accountName, byte[] image)
+    {
+        using var entry = GetDirectoryEntry();
+        var searcher = new DirectorySearcher(entry)
+        {
+            Filter = $"{LdapAttributesConstants.ACCOUNT_NAME}={accountName}"
+        };
+
+        var results = await Task.Run(searcher.FindOne);
+        var userEntry = results.GetDirectoryEntry();
+        await Task.Run(() => userEntry.InvokeSet(LdapAttributesConstants.JPEG_PHOTO, image));
+        userEntry.CommitChanges();
+        userEntry.Close();
     }
 
     public async Task<UserInfo> GetUserInfoAsync(string accountName)
