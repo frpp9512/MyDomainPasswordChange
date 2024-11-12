@@ -20,13 +20,13 @@ public class AuthController : Controller
     private readonly IDomainPasswordManagement _passwordManagement;
     private readonly IDependenciesGroupsManagement _groupsManagement;
     private readonly IAlertCountingManagement _alertCountingManagement;
-    private readonly IMailNotificator _notificator;
+    private readonly IMailNotifier _notificator;
 
     public AuthController(ILogger<AuthController> logger,
                           IDomainPasswordManagement passwordManagement,
                           IDependenciesGroupsManagement groupsManagement,
                           IAlertCountingManagement alertCountingManagement,
-                          IMailNotificator notificator)
+                          IMailNotifier notificator)
     {
         _logger = logger;
         _passwordManagement = passwordManagement;

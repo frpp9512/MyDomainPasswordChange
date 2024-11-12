@@ -21,7 +21,7 @@ public class Program
                 _ = services.AddTransient<MyDomainPasswordManagement>();
                 _ = services.AddTransient<IMailSettingsProvider, MailSettingsProvider>();
                 _ = services.AddSingleton<IMyMailService, MyMailService>();
-                _ = services.AddTransient<IMailNotificator, MailNotificator>();
+                _ = services.AddTransient<IMailNotifier, MailNotificator>();
                 _ = services.AddHostedService<Worker>();
             });
 }

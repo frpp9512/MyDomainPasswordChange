@@ -9,11 +9,11 @@ using System.Threading.Tasks;
 
 namespace MyDomainPasswordChange.Managers.Services;
 
-public class MailNotificator(IMyMailService mailService,
+public class MailNotifier(IMyMailService mailService,
                              IConfiguration configuration,
                              IWebHostEnvironment webHostEnvironment,
                              IHttpContextAccessor httpContextAccessor,
-                             IDomainPasswordManagement passwordManagement) : IMailNotificator
+                             IDomainPasswordManagement passwordManagement) : IMailNotifier
 {
     private readonly IMyMailService _mailService = mailService;
     private readonly IConfiguration _configuration = configuration;
@@ -184,12 +184,13 @@ public class MailNotificator(IMyMailService mailService,
         return template;
     }
 
-    public async Task SendManagementUserPasswordResetted(UserInfo userInfo, (string name, string email) adminInfo) => await _mailService.SendMailAsync(new MailRequest
-    {
-        Body = GetManagementUserPasswordResettedTemplate(userInfo, adminInfo),
-        MailTo = AdminEmail,
-        Subject = "Contraseña reseteada por administrador - Cambio de contraseña"
-    });
+    public async Task SendManagementUserPasswordResetted(UserInfo userInfo, (string name, string email) adminInfo)
+        => await _mailService.SendMailAsync(new MailRequest
+        {
+            Body = GetManagementUserPasswordResettedTemplate(userInfo, adminInfo),
+            MailTo = AdminEmail,
+            Subject = "Contraseña reseteada por administrador - Cambio de contraseña"
+        });
 
     private string GetManagementUserPasswordResettedTemplate(UserInfo userInfo, (string name, string email) adminInfo)
     {
@@ -214,6 +215,26 @@ public class MailNotificator(IMyMailService mailService,
     private string GetManagementUserPasswordSettedTemplate(UserInfo userInfo, (string name, string email) adminInfo)
     {
         var templatePath = Path.Combine(_webHostEnvironment.WebRootPath, $"templates{Path.DirectorySeparatorChar}mail_admin_user_password_setted.html");
+        var template = File.ReadAllText(templatePath);
+        template = template.Replace("{adminAccountName}", $"{adminInfo.name} ({adminInfo.email})");
+        template = template.Replace("{userAccountName}", $"{userInfo.DisplayName} ({userInfo.Email})");
+        template = template.Replace("{requestIp}", HttpContext.Connection.RemoteIpAddress.ToString());
+        DateTime dateTime = DateTime.Now;
+        template = template.Replace("{time}", dateTime.ToShortTimeString());
+        template = template.Replace("{date}", dateTime.ToShortDateString());
+        return template;
+    }
+
+    public async Task SendManagementAccountDeleted(UserInfo userInfo, (string name, string email) adminInfo) => await _mailService.SendMailAsync(new MailRequest
+    {
+        Body = GetManagementAccountDeletedTemplate(userInfo, adminInfo),
+        MailTo = AdminEmail,
+        Subject = "Cuenta eliminada por administrador - Cambio de contraseña"
+    });
+
+    private string GetManagementAccountDeletedTemplate(UserInfo userInfo, (string name, string email) adminInfo)
+    {
+        var templatePath = Path.Combine(_webHostEnvironment.WebRootPath, $"templates{Path.DirectorySeparatorChar}mail_admin_account_deleted.html");
         var template = File.ReadAllText(templatePath);
         template = template.Replace("{adminAccountName}", $"{adminInfo.name} ({adminInfo.email})");
         template = template.Replace("{userAccountName}", $"{userInfo.DisplayName} ({userInfo.Email})");

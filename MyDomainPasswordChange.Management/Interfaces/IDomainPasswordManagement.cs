@@ -8,6 +8,7 @@ namespace MyDomainPasswordChange.Management.Interfaces;
 public interface IDomainPasswordManagement
 {
     bool AuthenticateUser(string accountName, string password);
+    Task<bool> AuthenticateUserAsync(string accountName, string password);
     void ChangeUserPassword(string accountName, string password, string newPassword);
     void SetUserPassword(string accountName, string newPassword);
     void ResetPassword(string accountName, string tempPassword);

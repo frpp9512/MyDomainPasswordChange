@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace PasswordExpirationCheckService.Services;
 
-public class MailNotificator : IMailNotificator
+public class MailNotificator : IMailNotifier
 {
     private readonly IMyMailService _mailService;
     private readonly IConfiguration _configuration;

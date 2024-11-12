@@ -213,3 +213,7 @@ article > p {
     justify-content: space-between;
     align-items: baseline;
 }
+
+main {
+    padding-bottom: 25px;
+}

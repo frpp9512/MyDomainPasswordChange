@@ -17,6 +17,7 @@
                 </button>
             </div>
         }
+
         @if (TempData["Error"] != null)
         {
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -26,6 +27,7 @@
                 </button>
             </div>
         }
+
         @if (TempData["PasswordResetted"] != null)
         {
             <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -37,6 +39,7 @@
                 </button>
             </div>
         }
+
         @if (TempData["UserUnknown"] != null)
         {
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -46,10 +49,21 @@
                 </button>
             </div>
         }
+
         @if (TempData["PasswordSetted"] != null)
         {
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 <strong><i class="fas fa-asterisk"></i> CONTRASEÑA ESTABLECIDA</strong> Se establecido satisfactoriamente la contraseña al usuario <b>@TempData["PasswordResetted"]</b>.
+                <button type="button" class="close" data-dismiss="alert" aria-label="cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        }
+
+        @if (TempData["AccountDeleted"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <strong><i class="fas fa-asterisk"></i> CUENTA ELIMINADA</strong> Se ha eliminado satisfactoriamente la cuenta de  usuario <b>@TempData["AccountDeleted"]</b>.
                 <button type="button" class="close" data-dismiss="alert" aria-label="cerrar">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -199,9 +213,12 @@
                                     <partial name="_PasswordExpirationDateLabel" model="user" />
                                 </td>
                                 <td align="right">
-                                    <a asp-action="UserDetails" asp-controller="Management" asp-route-accountName="@user.AccountName"><i class="btn btn-outline-info fas fa-info-circle m-1"></i></a>
-                                    <a asp-action="ResetUserPassword" asp-controller="Management" asp-route-accountName="@user.AccountName"><i class="btn btn-info fas fa-undo-alt m-1"></i></a>
-                                    <a asp-action="SetUserPassword" asp-controller="Management" asp-route-accountName="@user.AccountName"><i class="btn btn-success fas fa-asterisk m-1"></i></a>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a class="btn btn-outline-info" asp-action="UserDetails" asp-controller="Management" asp-route-accountName="@user.AccountName"><i class="fas fa-info-circle m-1"></i></a>
+                                        <a class="btn btn-info" asp-action="ResetUserPassword" asp-controller="Management" asp-route-accountName="@user.AccountName"><i class="fas fa-undo-alt m-1"></i></a>
+                                        <a class="btn btn-success" asp-action="SetUserPassword" asp-controller="Management" asp-route-accountName="@user.AccountName"><i class="fas fa-asterisk m-1"></i></a>
+                                        <a class="btn btn-danger" asp-action="DeleteAccount" asp-controller="Management" asp-route-accountName="@user.AccountName"><i class="fas fa-trash m-1"></i></a>
+                                    </div>
                                 </td>
                             </tr>
                         }

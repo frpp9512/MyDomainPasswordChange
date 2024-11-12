@@ -3,12 +3,16 @@ using MyDomainPasswordChange.Management.Excepetions;
 using MyDomainPasswordChange.Management.Helpers;
 using MyDomainPasswordChange.Management.Interfaces;
 using MyDomainPasswordChange.Management.Models;
+using System;
 using System.Collections.Generic;
 using System.DirectoryServices;
 using System.DirectoryServices.AccountManagement;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace MyDomainPasswordChange.Management.Managers;
@@ -20,9 +24,10 @@ namespace MyDomainPasswordChange.Management.Managers;
 /// Creates a new instance of <see cref="MyDomainPasswordManagement"/>.
 /// </remarks>
 /// <param name="credentialsProvider">The implementation of <see cref="IBindCredentialsProvider"/> to access the bind credential info.</param>
-public class MyDomainPasswordManagement(IOptions<LdapConnectionConfiguration> connectionOptions) : IDomainPasswordManagement
+public class MyDomainPasswordManagement(IOptions<LdapConnectionConfiguration> connectionOptions, IOptions<AuthConfiguration> authConfig) : IDomainPasswordManagement
 {
     private readonly LdapConnectionConfiguration _connectionOptions = connectionOptions.Value;
+    private readonly AuthConfiguration _authConfig = authConfig.Value;
 
     public async Task<bool> CreateNewUserAsync(UserInfo userInfo, string password, string dependencyOU, string areaOU, params string[] groups)
     {
@@ -117,8 +122,32 @@ public class MyDomainPasswordManagement(IOptions<LdapConnectionConfiguration> co
     /// <returns><see langword="true"/> if the authentication succeeded.</returns>
     public bool AuthenticateUser(string accountName, string password)
     {
-        PrincipalContext context = GenerateContext();
-        return context.ValidateCredentials(accountName, password);
+        return AuthenticateUserAsync(accountName, password).GetAwaiter().GetResult();
+    }
+
+    /// <summary>
+    /// Authenticates the specified user credentials.
+    /// </summary>
+    /// <param name="accountName">The account name of the user.</param>
+    /// <param name="password">The password of the user account.</param>
+    /// <returns><see langword="true"/> if the authentication succeeded.</returns>
+    public async Task<bool> AuthenticateUserAsync(string accountName, string password)
+    {
+        var apiBaseUri = new Uri(_authConfig.AuthApiBaseUrl);
+        var client = new HttpClient
+        {
+            BaseAddress = apiBaseUri
+        };
+
+        var authRequest = new
+        {
+            accountName,
+            password
+        };
+
+        var response = await client.PostAsJsonAsync("/auth", authRequest);
+
+        return response.IsSuccessStatusCode;
     }
 
     private PrincipalContext GenerateContext() => new(ContextType.Domain,

@@ -20,6 +20,8 @@ public static class PasswordManagementHelpers
     {
         IConfiguration configuration = services.BuildServiceProvider().GetService<IConfiguration>();
         _ = services.Configure<LdapConnectionConfiguration>(configuration.GetSection("LdapConnectionConfiguration"));
+        _ = services.Configure<AuthConfiguration>(configuration.GetSection("AuthConfiguration"));
+
         _ = services.AddTransient<IDomainPasswordManagement, MyDomainPasswordManagement>();
         return services;
     }

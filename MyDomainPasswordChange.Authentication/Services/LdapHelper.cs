@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Options;
 using MyDomainPasswordChange.Authentication.Configuration;
 using Novell.Directory.Ldap;
-using System.Security.Principal;
+using System.Text;
 
 namespace MyDomainPasswordChange.Authentication.Services;
 
@@ -77,7 +77,32 @@ public class LdapHelper(IOptions<LdapAuthenticationOptions> options)
             domainSid = entry.GetAttribute("objectSid").ByteValue;
         }
 
-        return domainSid is not null ? new SecurityIdentifier(domainSid, 0).ToString() : null;
+        return domainSid is not null ? ConvertSidToString(domainSid) : null;
+    }
+
+    private string ConvertSidToString(byte[] sid)
+    {
+        var sb = new StringBuilder("S-");
+        _ = sb.Append(sid[0]); // Revision level
+        
+        // Identifier Authority
+        long authority = 0;
+        for (var i = 2; i < 8; i++)
+        {
+            authority |= ((long)sid[i]) << (8 * (5 - (i - 2)));
+        }
+
+        _ = sb.Append('-').Append(authority);
+        // Sub authorities
+        int subAuthorityCount = sid[1];
+        for (var i = 0; i < subAuthorityCount; i++)
+        {
+            var offset = 8 + (i * 4);
+            var subAuthority = BitConverter.ToUInt32(sid, offset);
+            _ = sb.Append('-').Append(subAuthority);
+        }
+
+        return sb.ToString();
     }
 
     public List<string> GetUserGroups(string username, string password)

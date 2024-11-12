@@ -21,7 +21,7 @@ namespace MyDomainPasswordChange.Controllers;
 public class HomeController(ILogger<HomeController> logger,
                             IDomainPasswordManagement passwordManagement,
                             IPasswordHistoryManager historyManager,
-                            IMailNotificator mailNotificator,
+                            IMailNotifier mailNotificator,
                             IWebHostEnvironment webHostEnvironment,
                             IConfiguration configuration,
                             IChallenger challenger,
@@ -30,7 +30,7 @@ public class HomeController(ILogger<HomeController> logger,
     private readonly ILogger<HomeController> _logger = logger;
     private readonly IDomainPasswordManagement _passwordManagement = passwordManagement;
     private readonly IPasswordHistoryManager _historyManager = historyManager;
-    private readonly IMailNotificator _mailNotificator = mailNotificator;
+    private readonly IMailNotifier _mailNotificator = mailNotificator;
     private readonly IWebHostEnvironment _webHostEnvironment = webHostEnvironment;
     private readonly IConfiguration _configuration = configuration;
     private readonly IChallenger _challenger = challenger;

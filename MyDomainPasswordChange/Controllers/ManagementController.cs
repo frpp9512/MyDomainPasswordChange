@@ -27,7 +27,7 @@ public class ManagementController(IDomainPasswordManagement passwordManagement,
                                   IDependenciesGroupsManagement groupsManagement,
                                   IPasswordHistoryManager historyManager,
                                   IConfiguration configuration,
-                                  IMailNotificator mailNotificator,
+                                  IMailNotifier mailNotificator,
                                   IMapper mapper) : Controller
 {
     private readonly IDomainPasswordManagement _passwordManagement = passwordManagement;
@@ -35,7 +35,7 @@ public class ManagementController(IDomainPasswordManagement passwordManagement,
     private readonly IDependenciesGroupsManagement _groupsManagement = groupsManagement;
     private readonly IPasswordHistoryManager _historyManager = historyManager;
     private readonly IConfiguration _configuration = configuration;
-    private readonly IMailNotificator _mailNotificator = mailNotificator;
+    private readonly IMailNotifier _mailNotificator = mailNotificator;
     private readonly IMapper _mapper = mapper;
 
     [HttpGet]
@@ -111,18 +111,19 @@ public class ManagementController(IDomainPasswordManagement passwordManagement,
         return viewModel;
     }
 
-    private List<UserViewModel> MapUsersToViewModels(List<UserInfo> groupUsers) => groupUsers.Select(user =>
-                                                                                    {
-                                                                                        UserViewModel vm = _mapper.Map<UserViewModel>(user);
-                                                                                        vm.InternetAccess = user.Groups switch
-                                                                                        {
-                                                                                            var groups when groups.Any(g => g.AccountName == Constants.FullInternetGroup) => InternetAccess.Full,
-                                                                                            var groups when groups.Any(g => g.AccountName == Constants.RestInternetGroup) => InternetAccess.Restricted,
-                                                                                            var groups when groups.Any(g => g.AccountName == Constants.NationalInternetGroup) => InternetAccess.National,
-                                                                                            _ => InternetAccess.None
-                                                                                        };
-                                                                                        return vm;
-                                                                                    }).ToList();
+    private List<UserViewModel> MapUsersToViewModels(List<UserInfo> groupUsers)
+        => groupUsers.Select(user =>
+        {
+            UserViewModel vm = _mapper.Map<UserViewModel>(user);
+            vm.InternetAccess = user.Groups switch
+            {
+                var groups when groups.Any(g => g.AccountName == Constants.FullInternetGroup) => InternetAccess.Full,
+                var groups when groups.Any(g => g.AccountName == Constants.RestInternetGroup) => InternetAccess.Restricted,
+                var groups when groups.Any(g => g.AccountName == Constants.NationalInternetGroup) => InternetAccess.National,
+                _ => InternetAccess.None
+            };
+            return vm;
+        }).ToList();
 
     [HttpGet]
     public async Task<IActionResult> ResetUserPasswordAsync(string accountName)
@@ -304,6 +305,73 @@ public class ManagementController(IDomainPasswordManagement passwordManagement,
         }
 
         TempData["UnauthorizedAction"] = true;
+        return RedirectToAction("Index");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> DeleteAccountAsync(string accountName)
+    {
+        UserInfo user;
+        try
+        {
+            user = await _passwordManagement.GetUserInfoAsync(accountName);
+        }
+        catch (UserNotFoundException)
+        {
+            TempData["UserUnknown"] = accountName;
+            return RedirectToAction("Index");
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = ex.Message;
+            return RedirectToAction("Index");
+        }
+
+        if (User.IsInRole("GlobalAdmin")
+            || user.Groups.Any(g => User.Claims.First(c => c.Type == "DependencyGroups").Value
+                                                       .Contains(g.AccountName)))
+        {
+            UserViewModel viewModel = _mapper.Map<UserViewModel>(user);
+            viewModel.InternetAccess = user.Groups switch
+            {
+                var groups when groups.Any(g => g.AccountName == Constants.FullInternetGroup) => InternetAccess.Full,
+                var groups when groups.Any(g => g.AccountName == Constants.RestInternetGroup) => InternetAccess.Restricted,
+                var groups when groups.Any(g => g.AccountName == Constants.NationalInternetGroup) => InternetAccess.National,
+                _ => InternetAccess.None
+            };
+
+            return View(viewModel);
+        }
+
+        TempData["UnauthorizedAction"] = true;
+        return RedirectToAction("Index");
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAccountAsync(DeleteAccountModel viewModel)
+    {
+        if (_passwordManagement.UserExists(viewModel.AccountName))
+        {
+            try
+            {
+                var user = await _passwordManagement.GetUserInfoAsync(viewModel.AccountName);
+                _passwordManagement.DeleteAccount(viewModel.AccountName);
+                await _mailNotificator.SendManagementAccountDeleted(
+                    user,
+                    (User.Identity.Name, User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value));
+                TempData["AccountDeleted"] = user.DisplayName;
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+        }
+        else
+        {
+            TempData["UserUnknown"] = viewModel.AccountName;
+        }
+
         return RedirectToAction("Index");
     }
 }

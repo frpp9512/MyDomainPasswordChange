@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Options;
+using MyDomainPasswordChange.Api.Authorization.Helpers;
 using MyDomainPasswordChange.Api.Models;
 using MyDomainPasswordChange.Data.Interfaces;
 using MyDomainPasswordChange.Management.Excepetions;
@@ -20,16 +21,19 @@ public static class PasswordEndpoints
             .WithDescription("Endpoints for password managements.");
 
         _ = passwordGroup.MapPost("change", ChangeAccountPasswordAsync)
+            .AllowAnonymous()
             .WithName("Change password")
             .WithDisplayName("Change account password")
             .WithDescription("Changes the password of an account.");
 
         _ = passwordGroup.MapPost("set", SetAccountPasswordAsync)
+            .RequireAuthorization(AuthorizationConstants.Policies.DOMAIN_ADMINS_POLICY)
             .WithName("Set password")
             .WithDisplayName("Set the account password")
             .WithDescription("Set the password of an account.");
 
         _ = passwordGroup.MapPost("reset", ResetAccountPasswordAsync)
+            .RequireAuthorization(AuthorizationConstants.Policies.DOMAIN_ADMINS_POLICY)
             .WithName("Reset password")
             .WithDisplayName("Reset account password")
             .WithDescription("Reset the password of an account for a temporary default one.");
@@ -41,7 +45,7 @@ public static class PasswordEndpoints
                                                                  IDomainPasswordManagement passwordManagement,
                                                                  IPasswordHistoryManager _historyManager,
                                                                  IOptions<PasswordHistoryConfiguration> passwordHistoryConfiguration,
-                                                                 IMailNotificator mailNotificator,
+                                                                 IMailNotifier mailNotificator,
                                                                  ILoggerFactory loggerFactory)
     {
         ArgumentNullException.ThrowIfNull(nameof(changePasswordRequest));
@@ -114,7 +118,7 @@ public static class PasswordEndpoints
                                                               IDomainPasswordManagement passwordManagement,
                                                               IPasswordHistoryManager _historyManager,
                                                               IOptions<PasswordHistoryConfiguration> passwordHistoryConfiguration,
-                                                              IMailNotificator mailNotificator,
+                                                              IMailNotifier mailNotificator,
                                                               ILoggerFactory loggerFactory)
     {
         ArgumentNullException.ThrowIfNull(nameof(setPasswordRequest));
@@ -182,7 +186,7 @@ public static class PasswordEndpoints
                                                                 IPasswordHistoryManager _historyManager,
                                                                 IOptions<PasswordHistoryConfiguration> passwordHistoryConfiguration,
                                                                 IOptions<AdminInfoConfiguration> AdminInfoConfiguration,
-                                                                IMailNotificator mailNotificator,
+                                                                IMailNotifier mailNotificator,
                                                                 IMapper mapper,
                                                                 ILoggerFactory loggerFactory)
     {

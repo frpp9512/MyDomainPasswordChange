@@ -19,7 +19,7 @@ public static class MailNotificationsHelper
     {
         _ = services.AddTransient<IMailSettingsProvider, MailSettingsProvider>();
         _ = services.AddSingleton<IMyMailService, MyMailService>();
-        _ = services.AddTransient<IMailNotificator, MailNotificator>();
+        _ = services.AddTransient<IMailNotifier, MailNotifier>();
         return services;
     }
 }

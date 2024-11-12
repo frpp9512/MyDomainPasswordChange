@@ -10,13 +10,13 @@ namespace MyDomainPasswordChange.Managers.Services;
 
 public class AlertCountingManagement(IHttpContextAccessor contextAccessor,
                                      IConfiguration configuration,
-                                     IMailNotificator notificator,
+                                     IMailNotifier notificator,
                                      IIpAddressBlacklist blacklist) : IAlertCountingManagement
 {
     private readonly ICounterManager _counterManager = new CounterManager();
     private readonly IHttpContextAccessor _contextAccessor = contextAccessor;
     private readonly IConfiguration _configuration = configuration;
-    private readonly IMailNotificator _notificator = notificator;
+    private readonly IMailNotifier _notificator = notificator;
     private readonly IIpAddressBlacklist _blacklist = blacklist;
     private readonly double _alarmRefresh = 5;
 

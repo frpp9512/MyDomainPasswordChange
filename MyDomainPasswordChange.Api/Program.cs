@@ -106,7 +106,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddTransient<IDomainPasswordManagement, MyDomainPasswordManagement>();
 builder.Services.AddTransient<IMailSettingsProvider, MailSettingsProvider>();
 builder.Services.AddSingleton<IMyMailService, MyMailService>();
-builder.Services.AddTransient<IMailNotificator, MailNotificator>();
+builder.Services.AddTransient<IMailNotifier, MailNotifier>();
 
 var connectionString = builder.Configuration.GetConnectionString("Sqlite");
 SqliteDataContext dataContext = new(connectionString);

@@ -12,12 +12,12 @@ namespace PasswordExpirationCheckService;
 public class Worker(ILogger<Worker> logger,
                     IConfiguration configuration,
                     MyDomainPasswordManagement passwordManagement,
-                    IMailNotificator mailNotificator) : BackgroundService, IDisposable
+                    IMailNotifier mailNotificator) : BackgroundService, IDisposable
 {
     private readonly ILogger<Worker> _logger = logger;
     private readonly IConfiguration _configuration = configuration;
     private readonly MyDomainPasswordManagement _passwordManagement = passwordManagement;
-    private readonly IMailNotificator _mailNotificator = mailNotificator;
+    private readonly IMailNotifier _mailNotificator = mailNotificator;
     private Timer _timer;
     private bool _running;
 
