@@ -1,4 +1,5 @@
 ﻿namespace MyDomainPasswordChange.Shared.DTO;
+
 public record CreateAccountDto
 {
     /// <summary>

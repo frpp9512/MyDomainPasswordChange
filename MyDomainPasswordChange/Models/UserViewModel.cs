@@ -66,8 +66,15 @@ public record UserViewModel
 
 public enum InternetAccess
 {
+    [Display(Name = "Sin acceso")]
     None,
+
+    [Display(Name = "Nacional")]
     National,
+
+    [Display(Name = "Internet sin redes sociales")]
     Restricted,
+
+    [Display(Name = "Acceso completo")]
     Full
 }

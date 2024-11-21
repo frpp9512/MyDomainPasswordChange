@@ -10,6 +10,7 @@ using MyDomainPasswordChange.Filters;
 using MyDomainPasswordChange.Managers.Helpers;
 using MyDomainPasswordChange.Managers.Interfaces;
 using MyDomainPasswordChange.Managers.Services;
+using MyDomainPasswordChange.Models;
 
 namespace MyDomainPasswordChange;
 
@@ -40,6 +41,8 @@ public class Startup(IConfiguration configuration)
                 config.AccessDeniedPath = "/Auth/AccessDenied";
             });
         _ = services.AddTransient<IDependenciesGroupsManagement, DependenciesGroupsManagement>();
+        _ = services.Configure<DependenciesConfiguration>(Configuration.GetSection("DependenciesConfiguration"));
+        _ = services.Configure<DefaultAccountConfiguration>(Configuration.GetSection("DefaultAccountConfiguration"));
         _ = services.AddControllersWithViews();
     }
 

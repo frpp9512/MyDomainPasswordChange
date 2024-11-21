@@ -6,6 +6,10 @@
 
 <main role="main">
     <div class="container">
+        <div class="mb-3">
+            <a asp-action="Index"><span class="fa fa-arrow-circle-left"></span> Regresar a la administración</a>
+        </div>
+
         <h1>Eliminar cuenta</h1>
         <h3>¿Está seguro que desea eliminar esta cuenta?</h3>
         <hr />
@@ -81,8 +85,7 @@
 
             <form asp-action="DeleteAccount">
                 <input type="hidden" name="AccountName" value="@Model.AccountName" />
-                <input type="submit" value="Eliminar" class="btn btn-danger" /> |
-                <a asp-action="Index">Regresar al listado</a>
+                <input type="submit" value="Eliminar" class="btn btn-danger" />
             </form>
         </div>
     </div>

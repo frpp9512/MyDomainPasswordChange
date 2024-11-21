@@ -44,39 +44,36 @@ public class AuthController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(LoginViewModel viewModel)
     {
-        if (ModelState.IsValid)
+        if (ModelState.IsValid && _passwordManagement.AuthenticateUser(viewModel.Username, viewModel.Password))
         {
-            if (_passwordManagement.AuthenticateUser(viewModel.Username, viewModel.Password))
-            {
-                Management.Models.UserInfo user = await _passwordManagement.GetUserInfo(viewModel.Username);
+            Management.Models.UserInfo user = await _passwordManagement.GetUserInfo(viewModel.Username);
 
-                if (user.Enabled &&
-                    user.IsDomainAdmin &&
-                    user.Groups.Any(g =>
-                        _groupsManagement.DefineIfDependencyDeclaration(g.AccountName) ||
-                        _groupsManagement.DefineIfGlobalDeclaration(g.AccountName)))
-                {
-                    List<Claim> claims =
-                    [
-                        new (ClaimTypes.NameIdentifier, user.AccountName),
+            if (user.Enabled &&
+                user.IsDomainAdmin &&
+                user.Groups.Any(g =>
+                    _groupsManagement.DefineIfDependencyDeclaration(g.AccountName) ||
+                    _groupsManagement.DefineIfGlobalDeclaration(g.AccountName)))
+            {
+                List<Claim> claims =
+                [
+                    new (ClaimTypes.NameIdentifier, user.AccountName),
                         new (ClaimTypes.Name, user.DisplayName),
-                        new (ClaimTypes.Email, user.Email),
+                        new (ClaimTypes.Email, user.Email ?? ""),
                         user.Groups.Any(g => _groupsManagement.DefineIfGlobalDeclaration(g.AccountName)) ? new(ClaimTypes.Role, "GlobalAdmin") : new(ClaimTypes.Role, "DependencyAdmin"),
                     ];
 
-                    var dependencyGroups = string.Join(";", user.Groups.Where(g => _groupsManagement.ExistDelclarationWithName(g.AccountName))
-                                                                       .Select(g => g.AccountName)
-                                                                       .ToArray());
-                    claims.Add(new("DependencyGroups", dependencyGroups));
-                    ClaimsIdentity identity = new(claims, "CookieAuth");
-                    ClaimsPrincipal principal = new(identity);
-                    await HttpContext.SignInAsync("CookieAuth",
-                                                  principal,
-                                                  new AuthenticationProperties { IsPersistent = viewModel.RememberMe });
+                var dependencyGroups = string.Join(";", user.Groups.Where(g => _groupsManagement.ExistDelclarationWithName(g.AccountName))
+                                                                   .Select(g => g.AccountName)
+                                                                   .ToArray());
+                claims.Add(new("DependencyGroups", dependencyGroups));
+                ClaimsIdentity identity = new(claims, "CookieAuth");
+                ClaimsPrincipal principal = new(identity);
+                await HttpContext.SignInAsync("CookieAuth",
+                                              principal,
+                                              new AuthenticationProperties { IsPersistent = viewModel.RememberMe });
 
-                    await _notificator.SendManagementLogin(user);
-                    return Redirect(viewModel.ReturnUrl);
-                }
+                await _notificator.SendManagementLogin(user);
+                return Redirect(viewModel.ReturnUrl);
             }
         }
 

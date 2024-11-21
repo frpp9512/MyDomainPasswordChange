@@ -61,4 +61,5 @@ public class MailNotificator : IMailNotifier
     public Task SendManagementUserPasswordResetted(UserInfo userInfo, (string name, string email) adminInfo) => throw new NotImplementedException();
 
     public Task SendManagementUserPasswordSetted(UserInfo userInfo, (string name, string email) adminInfo) => throw new NotImplementedException();
+    public Task SendManagementAccountDeleted(UserInfo userInfo, (string name, string email) adminInfo) => throw new NotImplementedException();
 }

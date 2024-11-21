@@ -379,6 +379,33 @@ public class MyDomainPasswordManagement(IOptions<LdapConnectionConfiguration> co
         return userInfo;
     }
 
+    public List<string> GetAllWorkstations()
+    {
+        List<string> workstations = [];
+
+        try
+        {
+            using var entry = GetDirectoryEntry();
+            using DirectorySearcher searcher = new DirectorySearcher(entry);
+            searcher.Filter = "(&(objectClass=computer)(objectCategory=computer))";
+            searcher.PropertiesToLoad.Add("name");
+
+            foreach (SearchResult result in searcher.FindAll())
+            {
+                if (result.Properties["name"].Count > 0)
+                {
+                    workstations.Add(result.Properties["name"][0].ToString());
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("An error occurred: " + ex.Message);
+        }
+
+        return workstations;
+    }
+
     /// <summary>
     /// Gets the user image stored in the LDAP (in attribute "jpegPhoto").
     /// </summary>

@@ -40,6 +40,16 @@
             </div>
         }
 
+        @if (TempData["UserCreated"] is string accountCreated)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <strong><i class="fas fa-undo-alt"></i> CUENTA CREADA</strong> Se ha creado satisfactoriamente la cuenta: <b>@accountCreated</b>.
+                <button type="button" class="close" data-dismiss="alert" aria-label="cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        }
+
         @if (TempData["UserUnknown"] != null)
         {
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -72,6 +82,8 @@
 
         <h3>Administración</h3>
         <h5>Control de los usuarios del dominio</h5>
+
+        <a asp-action="CreateAccount" class="btn btn-success"><span class="fa fa-user-plus"></span> Crear cuenta</a>
 
         <div class="mt-3">
             <span class="badge badge-primary">

@@ -16,4 +16,5 @@ public interface IMailNotifier
     Task SendManagementUserPasswordResetted(UserInfo userInfo, (string name, string email) adminInfo);
     Task SendManagementUserPasswordSetted(UserInfo userInfo, (string name, string email) adminInfo);
     Task SendManagementAccountDeleted(UserInfo userInfo, (string name, string email) adminInfo);
+    Task SendManagementCreatedUser(UserInfo userInfo, string dependency, string area, (string Name, string Value) value);
 }

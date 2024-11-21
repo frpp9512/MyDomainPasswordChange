@@ -244,4 +244,26 @@ public class MailNotifier(IMyMailService mailService,
         template = template.Replace("{date}", dateTime.ToShortDateString());
         return template;
     }
+
+    public async Task SendManagementCreatedUser(UserInfo userInfo, string dependency, string area, (string Name, string Value) adminInfo) => await _mailService.SendMailAsync(new MailRequest
+    {
+        Body = GetManagementAccountCreatedTemplate(userInfo, adminInfo, area, dependency),
+        MailTo = AdminEmail,
+        Subject = "Cuenta creada por administrador - Cambio de contraseña"
+    });
+
+    private string GetManagementAccountCreatedTemplate(UserInfo userInfo, (string name, string email) adminInfo, string area, string dependency)
+    {
+        var templatePath = Path.Combine(_webHostEnvironment.WebRootPath, $"templates{Path.DirectorySeparatorChar}mail_admin_account_created.html");
+        var template = File.ReadAllText(templatePath);
+        template = template.Replace("{adminAccountName}", $"{adminInfo.name} ({adminInfo.email})");
+        template = template.Replace("{userAccountName}", $"{userInfo.DisplayName} ({userInfo.Email})");
+        template = template.Replace("{areaName}", area);
+        template = template.Replace("{dependencyName}", dependency);
+        template = template.Replace("{requestIp}", HttpContext.Connection.RemoteIpAddress.ToString());
+        DateTime dateTime = DateTime.Now;
+        template = template.Replace("{time}", dateTime.ToShortTimeString());
+        template = template.Replace("{date}", dateTime.ToShortDateString());
+        return template;
+    }
 }

@@ -271,6 +271,142 @@ public class ManagementController(IDomainPasswordManagement passwordManagement,
     }
 
     [HttpGet]
+    public async Task<IActionResult> CreateAccountAsync()
+    {
+        try
+        {
+            CreateAccountViewModel model = await GenerateCreateAccountViewModel();
+
+            return View(model);
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = ex.Message;
+            return Problem();
+        }
+    }
+
+    private async Task<CreateAccountViewModel> GenerateCreateAccountViewModel()
+    {
+        var accountName = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+        UserInfo userInfo = await _passwordManagement.GetUserInfo(accountName);
+        IEnumerable<DependencyDeclaration> groupsDeclarations = userInfo.Groups.Any(g => _groupsManagement.DefineIfGlobalDeclaration(g.AccountName))
+            ? _groupsManagement.GetAllDependenciesDeclarations()
+            : userInfo.Groups.Where(g => _groupsManagement.DefineIfDependencyDeclaration(g.AccountName))
+                                                    .Select(g => _groupsManagement.GetDeclarationByName(g.AccountName));
+
+        var workstations = _passwordManagement.GetAllWorkstations();
+        var model = new CreateAccountViewModel
+        {
+            AccountName = "",
+            Address = "",
+            AreaId = "",
+            DependencyId = "",
+            Description = "",
+            Email = "",
+            FirstName = "",
+            JobTitle = "",
+            LastName = "",
+            Office = "",
+            Password = "",
+            PersonalId = "",
+            Dependencies = groupsDeclarations.ToList(),
+            AvailableWorkstations = [.. workstations],
+        };
+        return model;
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateAccountAsync(CreateAccountModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(await GenerateCreateAccountViewModel());
+        }
+
+        try
+        {
+            if (_passwordManagement.UserExists(model.AccountName))
+            {
+                TempData["AccountNameTaken"] = model.AccountName;
+                return View(await GenerateCreateAccountViewModel());
+            }
+
+            var accountName = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            UserInfo userInfo = await _passwordManagement.GetUserInfo(accountName);
+            List<DependencyDeclaration> groupsDeclarations =
+                userInfo.Groups.Any(g => _groupsManagement.DefineIfGlobalDeclaration(g.AccountName))
+                ? _groupsManagement.GetAllDependenciesDeclarations().ToList()
+                : userInfo.Groups.Where(g => _groupsManagement.DefineIfDependencyDeclaration(g.AccountName))
+                                 .Select(g => _groupsManagement.GetDeclarationByName(g.AccountName))
+                                 .ToList();
+
+            if (groupsDeclarations.FirstOrDefault(group => group.GroupName == model.DependencyId) is not DependencyDeclaration selectedDependency
+                || selectedDependency.AreaDefinitions.FirstOrDefault(area => area.GroupName == model.AreaId) is not AreaDefinition selectedArea)
+            {
+                TempData["Error"] = "Debe de seleccionar una dependencia y un area válida para crear la cuenta.";
+                return View(await GenerateCreateAccountViewModel());
+            }
+
+            UserInfo newUserInfo = new()
+            {
+                AccountName = model.AccountName,
+                Address = model.Address,
+                AllowedWorkstations = model.AllowedWorkstations,
+                Description = model.Description,
+                DisplayName = $"{model.FirstName} {model.LastName}",
+                Email = $"{model.AccountName}@ingeco.cu",
+                Enabled = true,
+                FirstName = model.FirstName,
+                JobTitle = model.JobTitle,
+                LastName = model.LastName,
+                Office = model.Office,
+                MailboxCapacity = "150M",
+                PersonalId = model.PersonalId
+            };
+
+            string[] groups =
+            [
+                selectedDependency.GroupName,
+                selectedArea.GroupName,
+                model.InternetAccess switch
+                {
+                    InternetAccess.National => "navNacional",
+                    InternetAccess.Full => "navInternacional",
+                    InternetAccess.Restricted => "navInternacionalRest",
+                    _ => ""
+                },
+                model.CloudAccess ? "accesoNube" : "",
+                model.FTPAccess ? "accesoFtp" : "",
+                model.JabberAccess ? "accesoJabber" : "",
+                model.MediaAccess ? "mediaUser" : ""
+            ];
+
+            await _passwordManagement.CreateNewUserAsync(
+                newUserInfo,
+                model.Password,
+                selectedDependency.OU,
+                selectedArea.OU,
+                [..groups.Where(g => !string.IsNullOrEmpty(g))]);
+
+            await _mailNotificator.SendManagementCreatedUser(
+                            _mapper.Map<UserInfo>(newUserInfo),
+                            selectedDependency.Description,
+                            selectedArea.Description,
+                            (User.Identity.Name, User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value));
+
+            TempData["UserCreated"] = $"{model.DisplayName}";
+            return RedirectToActionPermanent("Index");
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = ex.Message;
+            return View(await GenerateCreateAccountViewModel());
+        }
+    }
+
+    [HttpGet]
     public async Task<IActionResult> UserDetailsAsync(string accountName)
     {
         UserInfo user;
