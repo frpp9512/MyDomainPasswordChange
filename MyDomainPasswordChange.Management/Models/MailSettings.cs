@@ -3,7 +3,7 @@
 /// <summary>
 /// Represents the necessary settings for email sending.
 /// </summary>
-public class MailSettings
+public record MailSettings
 {
     /// <summary>
     /// The sender email address.

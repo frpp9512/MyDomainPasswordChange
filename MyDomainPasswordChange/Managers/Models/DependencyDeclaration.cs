@@ -1,14 +1,18 @@
-﻿namespace MyDomainPasswordChange.Managers.Models;
+﻿using MyDomainPasswordChange.Models;
+using System.Collections.Generic;
+using System.Linq;
 
-public class DependencyDeclaration
+namespace MyDomainPasswordChange.Managers.Models;
+
+public record DependencyDeclaration
 {
-    /// <summary>
-    /// Defines the type of the group, "global" for general access, "dependency" for specific.
-    /// </summary>
-    public string Type { get; set; }
+    public required string Type { get; init; }
+    public required string GroupName { get; init; }
+    public required string OU { get; init; }
+    public string Description { get; set; }
+    public List<AreaDefinition> AreaDefinitions { get; init; } = [];
 
-    /// <summary>
-    /// Defines the name of the LDAP group.
-    /// </summary>
-    public string GroupName { get; set; }
+    public AreaDefinition this[string areaName] => AreaDefinitions.First(area => area.GroupName == areaName);
+
+    public bool ExistsArea(string areaName) => AreaDefinitions.Any(area => area.GroupName == areaName);
 }

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace PasswordExpirationCheckService.Services;
 
-public class MailNotificator : IMailNotificator
+public class MailNotificator : IMailNotifier
 {
     private readonly IMyMailService _mailService;
     private readonly IConfiguration _configuration;
@@ -39,7 +39,7 @@ public class MailNotificator : IMailNotificator
         var templatePath = _configuration.GetValue<string>("emailTemplatePath");
         var template = File.ReadAllText(templatePath);
         template = template.Replace("{displayName}", userInfo.DisplayName);
-        var dateTime = DateTime.Now;
+        DateTime dateTime = DateTime.Now;
         template = template.Replace("{expirationDays}", (expirationDate - dateTime).Days.ToString());
         template = template.Replace("{expirationDate}", expirationDate.ToShortDateString());
         template = template.Replace("{accountName}", userInfo.AccountName);
@@ -47,8 +47,11 @@ public class MailNotificator : IMailNotificator
     }
 
     public Task SendChangePasswordNotificationAsync(string accountName) => throw new NotImplementedException();
+
     public Task SendChangePasswordAlertAsync(string accountName) => throw new NotImplementedException();
+
     public Task SendChallengeAlertAsync() => throw new NotImplementedException();
+
     public Task SendBlacklistAlertAsync(string reason) => throw new NotImplementedException();
 
     public Task SendManagementLoginFailAlertAsync() => throw new NotImplementedException();
@@ -58,4 +61,5 @@ public class MailNotificator : IMailNotificator
     public Task SendManagementUserPasswordResetted(UserInfo userInfo, (string name, string email) adminInfo) => throw new NotImplementedException();
 
     public Task SendManagementUserPasswordSetted(UserInfo userInfo, (string name, string email) adminInfo) => throw new NotImplementedException();
+    public Task SendManagementAccountDeleted(UserInfo userInfo, (string name, string email) adminInfo) => throw new NotImplementedException();
 }

@@ -11,17 +11,15 @@ using System.Threading.Tasks;
 namespace MyDomainPasswordChange.Controllers;
 
 [Authorize(Roles = "GlobalAdmin")]
-public class BlacklistController : Controller
+public class BlacklistController(IIpAddressBlacklist blacklist) : Controller
 {
-    private readonly IIpAddressBlacklist _blacklist;
-
-    public BlacklistController(IIpAddressBlacklist blacklist) => _blacklist = blacklist;
+    private readonly IIpAddressBlacklist _blacklist = blacklist;
 
     [HttpGet]
     public async Task<IActionResult> Index()
     {
-        var blacklist = await _blacklist.GetIpAddressesAsync();
-        var vm = new BlacklistIndexViewModel
+        System.Collections.Generic.IEnumerable<Data.Models.BlacklistedIpAddress> blacklist = await _blacklist.GetIpAddressesAsync();
+        BlacklistIndexViewModel vm = new()
         {
             BlacklistedIpAddresses = blacklist.Select(b => b.GetViewModel())
         };
@@ -29,8 +27,7 @@ public class BlacklistController : Controller
     }
 
     [HttpGet]
-    public IActionResult Create()
-        => View();
+    public IActionResult Create() => View();
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -40,7 +37,7 @@ public class BlacklistController : Controller
         {
             if (IPAddress.TryParse(viewModel.IpAddress, out _))
             {
-                var model = viewModel.GetModel();
+                Data.Models.BlacklistedIpAddress model = viewModel.GetModel();
                 model.AddedInBlacklist = DateTime.Now;
                 await _blacklist.AddIpAddressAsync(model);
                 TempData["BlacklistCreated"] = model.IpAddress;
@@ -60,7 +57,7 @@ public class BlacklistController : Controller
     {
         if (await _blacklist.ExistsBlacklistedAddressAsync(id))
         {
-            var address = await _blacklist.GetBlacklistedIpAddressAsync(id);
+            Data.Models.BlacklistedIpAddress address = await _blacklist.GetBlacklistedIpAddressAsync(id);
             await _blacklist.RemoveBlacklistedAddressAsync(address);
             return Ok($"Se ha eliminado la dirección {address.IpAddress} de la lista negra satisfactoriamente.");
         }

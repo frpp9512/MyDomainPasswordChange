@@ -2,15 +2,8 @@
 
 namespace YpSecurity;
 
-public class LogonEventArgs : EventArgs
+public class LogonEventArgs(int logonTimes, DateTime logonAuthDateTime) : EventArgs
 {
-    public LogonEventArgs(int logonTimes, DateTime logonAuthDateTime)
-    {
-        LogonTimes = logonTimes;
-        AuthDateTime = logonAuthDateTime;
-    }
-
-    public int LogonTimes { get; }
-
-    public DateTime AuthDateTime { get; }
+    public int LogonTimes { get; } = logonTimes;
+    public DateTime AuthDateTime { get; } = logonAuthDateTime;
 }

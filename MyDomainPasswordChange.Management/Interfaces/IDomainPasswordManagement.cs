@@ -8,6 +8,7 @@ namespace MyDomainPasswordChange.Management.Interfaces;
 public interface IDomainPasswordManagement
 {
     bool AuthenticateUser(string accountName, string password);
+    Task<bool> AuthenticateUserAsync(string accountName, string password);
     void ChangeUserPassword(string accountName, string password, string newPassword);
     void SetUserPassword(string accountName, string newPassword);
     void ResetPassword(string accountName, string tempPassword);
@@ -20,4 +21,7 @@ public interface IDomainPasswordManagement
     Task<Image> GetUserImage(string accountName);
     Task<byte[]> GetUserImageBytesAsync(string accountName);
     Task<bool> CreateNewUserAsync(UserInfo userInfo, string password, string dependecyOU, string areaOU, params string[] groups);
+    void DeleteAccount(string accountName);
+    Task SetUserImageAsync(string accountName, byte[] image);
+    List<string> GetAllWorkstations();
 }

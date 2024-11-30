@@ -1,6 +1,6 @@
 ﻿namespace MyDomainPasswordChange.Management.Models;
 
-public class GroupInfo
+public record GroupInfo
 {
     /// <summary>
     /// The account name (sAMAccountName) of the user.

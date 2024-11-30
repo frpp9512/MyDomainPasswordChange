@@ -1,0 +1,229 @@
+﻿@using System.Text.Json
+@model MyDomainPasswordChange.Models.CreateAccountViewModel
+
+@{
+    ViewData["Title"] = "Crear cuenta";
+}
+
+<main role="main">
+    <div class="container">
+
+        <div class="mb-3">
+            <a asp-action="Index"><span class="fa fa-arrow-circle-left"></span> Regresar a la administración</a>
+        </div>
+
+        @if (TempData["Error"] is string error)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <strong><i class="fas fa-heart-broken"></i> HA OCURRIDO UN ERROR</strong> @error
+                <button type="button" class="close" data-dismiss="alert" aria-label="cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        }
+
+        @if (TempData["AccountNameTaken"] is string accountTaken)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <strong><i class="fas fa-user-alt-slash"></i> NOMBRE DE USUARIO EN USO</strong> El nombre de usuario <b>@accountTaken</b> ya esta siendo usado en el dominio.
+                <button type="button" class="close" data-dismiss="alert" aria-label="cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        }
+
+        <h1>Crear cuenta</h1>
+
+        <h4>Datos de la cuenta</h4>
+        <hr />
+        <form asp-action="CreateAccount">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="row">
+                <div class="col-md-5 col-12">
+                    <div class="form-group">
+                        <label asp-for="FirstName" class="control-label"></label>
+                        <input asp-for="FirstName" class="form-control" />
+                        <span asp-validation-for="FirstName" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="LastName" class="control-label"></label>
+                        <input asp-for="LastName" class="form-control" />
+                        <span asp-validation-for="LastName" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Description" class="control-label"></label>
+                        <input asp-for="Description" class="form-control" />
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="AccountName" class="control-label"></label>
+                        <input asp-for="AccountName" class="form-control" />
+                        <span asp-validation-for="AccountName" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Email" class="control-label"></label>
+                        <input readonly asp-for="Email" class="form-control" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="PersonalId" class="control-label"></label>
+                        <input asp-for="PersonalId" class="form-control" />
+                        <span asp-validation-for="PersonalId" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="JobTitle" class="control-label"></label>
+                        <input asp-for="JobTitle" class="form-control" />
+                        <span asp-validation-for="JobTitle" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Office" class="control-label"></label>
+                        <input asp-for="Office" class="form-control" />
+                        <span asp-validation-for="Office" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Address" class="control-label"></label>
+                        <input asp-for="Address" class="form-control" />
+                        <span asp-validation-for="Address" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-5 col-12">
+                    <div class="form-group">
+                        <label asp-for="Password" class="control-label"></label>
+                        <input asp-for="Password" class="form-control" />
+                        <span asp-validation-for="Password" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="ConfirmPassword" class="control-label"></label>
+                        <input asp-for="ConfirmPassword" class="form-control" />
+                        <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="DependencyId" class="control-label"></label>
+                        <select asp-for="DependencyId" class="form-control">
+                            @foreach (var dependency in Model.Dependencies)
+                            {
+                                <option value="@dependency.GroupName">@dependency.Description</option>
+                            }
+                        </select>
+                        <span asp-validation-for="DependencyId" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="AreaId" class="control-label"></label>
+                        <select asp-for="AreaId" class="form-control" />
+                        <span asp-validation-for="AreaId" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="InternetAccess" class="control-label"></label>
+                        <select asp-for="InternetAccess" asp-items="@Html.GetEnumSelectList<InternetAccess>()" class="form-control">
+                        </select>
+                        <span asp-validation-for="InternetAccess" class="text-danger"></span>
+                    </div>
+                    <div class="form-check">
+                        <input asp-for="CloudAccess" class="form-check-input" />
+                        <label asp-for="CloudAccess" class="form-check-label"></label>
+                    </div>
+                    <div class="form-check">
+                        <input asp-for="FTPAccess" class="form-check-input" />
+                        <label asp-for="FTPAccess" class="form-check-label"></label>
+                    </div>
+                    <div class="form-check">
+                        <input asp-for="JabberAccess" class="form-check-input" />
+                        <label asp-for="JabberAccess" class="form-check-label"></label>
+                    </div>
+                    <div class="form-check">
+                        <input asp-for="MediaAccess" class="form-check-input" />
+                        <label asp-for="MediaAccess" class="form-check-label"></label>
+                    </div>
+                    <div class="form-group mt-3">
+                        <label asp-for="AllowedWorkstations" class="control-label"></label>
+                        <select asp-for="AllowedWorkstations" class="form-control" multiple>
+                            <option value="NONE">Ninguna</option>
+                            @foreach (var workstation in Model.AvailableWorkstations)
+                            {
+                                <option value="@workstation">@workstation</option>
+                            }
+                        </select>
+                        <span asp-validation-for="AllowedWorkstations" class="text-danger"></span>
+                        <div class="selected-workstations">
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="form-group">
+                        <input type="submit" value="Crear" class="btn btn-primary" />
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</main>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        const dependenciesDefinitions = @Html.Raw(JsonSerializer.Serialize(Model.Dependencies));
+
+        document.addEventListener('DOMContentLoaded', function (e) {
+            const dependencySelect = document.querySelector('#DependencyId');
+            dependencySelect.addEventListener('change', function (e) {
+                updateAreas();
+            });
+
+            const accountNameInput = document.querySelector('#AccountName');
+            accountNameInput.addEventListener('keyup', function (e) {
+                const email = `${e.target.value}@@ingeco.cu`;
+                const emailInput = document.querySelector('#Email');
+                emailInput.value = email;
+            });
+
+            const workstationsInput = document.querySelector('#AllowedWorkstations');
+            workstationsInput.addEventListener('change', function (e) {
+                const selectedWorkstationsContainer = document.querySelector('.selected-workstations');
+                const workstationBadges = selectedWorkstationsContainer.querySelectorAll('span');
+                workstationBadges.forEach(badge => selectedWorkstationsContainer.removeChild(badge));
+
+                const selectedOptions = Array.from(e.target.selectedOptions);
+                const selectedValues = selectedOptions.map(option => option.value);
+                selectedValues.forEach(selected => {
+                    const newBadge = document.createElement('span');
+                    newBadge.classList.add('badge');
+                    newBadge.classList.add('badge-dark');
+                    newBadge.innerText = selected;
+                    selectedWorkstationsContainer.appendChild(newBadge);
+                });
+            });
+
+            updateAreas();
+        });
+
+        function updateAreas() {
+            const dependencySelect = document.querySelector('#DependencyId');
+            const selectedValue = dependencySelect.value;
+            const dependency = dependenciesDefinitions.filter(dep => dep.GroupName == selectedValue)[0];
+            if (!dependency) {
+                return;
+            }
+
+            const areaSelect = document.querySelector('#AreaId');
+            const options = areaSelect.querySelectorAll('option');
+            options.forEach(option => {
+                areaSelect.removeChild(option);
+            });
+
+            const areas = dependency.AreaDefinitions;
+            console.log(areas);
+            areas.forEach(area => {
+                const newOption = document.createElement('option');
+                newOption.value = area.GroupName;
+                newOption.text = area.Description;
+                areaSelect.appendChild(newOption);
+            });
+        }
+    </script>
+}

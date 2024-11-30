@@ -2,7 +2,7 @@
 
 namespace MyDomainPasswordChange.Models;
 
-public class SetUserPasswordViewModel : UserViewModel
+public record SetUserPasswordViewModel : UserViewModel
 {
     [Required]
     [Display(Name = "Contraseña")]

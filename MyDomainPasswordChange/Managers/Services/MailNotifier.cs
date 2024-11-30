@@ -9,34 +9,25 @@ using System.Threading.Tasks;
 
 namespace MyDomainPasswordChange.Managers.Services;
 
-public class MailNotificator : IMailNotificator
+public class MailNotifier(IMyMailService mailService,
+                             IConfiguration configuration,
+                             IWebHostEnvironment webHostEnvironment,
+                             IHttpContextAccessor httpContextAccessor,
+                             IDomainPasswordManagement passwordManagement) : IMailNotifier
 {
-    private readonly IMyMailService _mailService;
-    private readonly IConfiguration _configuration;
-    private readonly IWebHostEnvironment _webHostEnvironment;
-    private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly IDomainPasswordManagement _passwordManagement;
+    private readonly IMyMailService _mailService = mailService;
+    private readonly IConfiguration _configuration = configuration;
+    private readonly IWebHostEnvironment _webHostEnvironment = webHostEnvironment;
+    private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
+    private readonly IDomainPasswordManagement _passwordManagement = passwordManagement;
 
     private string AdminEmail => _configuration.GetValue<string>("adminEmail");
     private int PasswordExpirationDays => _configuration.GetValue<int>("passwordExpirationDays");
     private HttpContext HttpContext => _httpContextAccessor.HttpContext;
 
-    public MailNotificator(IMyMailService mailService,
-                           IConfiguration configuration,
-                           IWebHostEnvironment webHostEnvironment,
-                           IHttpContextAccessor httpContextAccessor,
-                           IDomainPasswordManagement passwordManagement)
-    {
-        _mailService = mailService;
-        _configuration = configuration;
-        _webHostEnvironment = webHostEnvironment;
-        _httpContextAccessor = httpContextAccessor;
-        _passwordManagement = passwordManagement;
-    }
-
     public async Task SendChangePasswordAlertAsync(string accountName)
     {
-        var user = await _passwordManagement.GetUserInfo(accountName);
+        UserInfo user = await _passwordManagement.GetUserInfo(accountName);
         await _mailService.SendMailAsync(new MailRequest
         {
             Body = GetAlertMailTemplate(user.DisplayName),
@@ -49,16 +40,18 @@ public class MailNotificator : IMailNotificator
 
     public async Task SendChangePasswordNotificationAsync(string accountName)
     {
-        var user = await _passwordManagement.GetUserInfo(accountName);
-        if (!string.IsNullOrEmpty(user.Email))
+        UserInfo user = await _passwordManagement.GetUserInfo(accountName);
+        if (string.IsNullOrEmpty(user.Email))
         {
-            await _mailService.SendMailAsync(new MailRequest
-            {
-                Body = GetNotificationMailTemplate(user.DisplayName, PasswordExpirationDays),
-                MailTo = user.Email,
-                Subject = "Notificación - Cambio de contraseña"
-            });
+            return;
         }
+
+        await _mailService.SendMailAsync(new MailRequest
+        {
+            Body = GetNotificationMailTemplate(user.DisplayName, PasswordExpirationDays),
+            MailTo = user.Email,
+            Subject = "Notificación - Cambio de contraseña"
+        });
     }
 
     public async Task SendChallengeAlertAsync() => await _mailService.SendMailAsync(new MailRequest
@@ -83,11 +76,11 @@ public class MailNotificator : IMailNotificator
         var template = File.ReadAllText(templatePath);
         template = template.Replace("{accountName}", accountName);
         template = template.Replace("{requestIp}", HttpContext.Connection.RemoteIpAddress.ToString());
-        var dateTime = DateTime.Now;
+        DateTime dateTime = DateTime.Now;
         template = template.Replace("{time}", dateTime.ToShortTimeString());
         template = template.Replace("{date}", dateTime.ToShortDateString());
         template = template.Replace("{expirationDays}", expirationDays.ToString());
-        var expirationDate = dateTime.AddDays(expirationDays);
+        DateTime expirationDate = dateTime.AddDays(expirationDays);
         template = template.Replace("{expirationDate}", expirationDate.ToShortDateString());
         return template;
     }
@@ -98,7 +91,7 @@ public class MailNotificator : IMailNotificator
         var template = File.ReadAllText(templatePath);
         template = template.Replace("{accountName}", accountName);
         template = template.Replace("{requestIp}", HttpContext.Connection.RemoteIpAddress.ToString());
-        var dateTime = DateTime.Now;
+        DateTime dateTime = DateTime.Now;
         template = template.Replace("{time}", dateTime.ToShortTimeString());
         template = template.Replace("{date}", dateTime.ToShortDateString());
         return template;
@@ -109,7 +102,7 @@ public class MailNotificator : IMailNotificator
         var templatePath = Path.Combine(_webHostEnvironment.WebRootPath, $"templates{Path.DirectorySeparatorChar}mail_challenge_alert_template.html");
         var template = File.ReadAllText(templatePath);
         template = template.Replace("{requestIp}", HttpContext.Connection.RemoteIpAddress.ToString());
-        var dateTime = DateTime.Now;
+        DateTime dateTime = DateTime.Now;
         template = template.Replace("{time}", dateTime.ToShortTimeString());
         template = template.Replace("{date}", dateTime.ToShortDateString());
         return template;
@@ -120,7 +113,7 @@ public class MailNotificator : IMailNotificator
         var templatePath = Path.Combine(_webHostEnvironment.WebRootPath, $"templates{Path.DirectorySeparatorChar}mail_ip_blacklisted_template.html");
         var template = File.ReadAllText(templatePath);
         template = template.Replace("{requestIp}", HttpContext.Connection.RemoteIpAddress.ToString());
-        var dateTime = DateTime.Now;
+        DateTime dateTime = DateTime.Now;
         template = template.Replace("{time}", dateTime.ToShortTimeString());
         template = template.Replace("{date}", dateTime.ToShortDateString());
         template = template.Replace("{blacklist_reason}", reason switch
@@ -146,7 +139,7 @@ public class MailNotificator : IMailNotificator
         var templatePath = Path.Combine(_webHostEnvironment.WebRootPath, $"templates{Path.DirectorySeparatorChar}mail_expiration_notification_template.html");
         var template = File.ReadAllText(templatePath);
         template = template.Replace("{displayName}", userInfo.DisplayName);
-        var dateTime = DateTime.Now;
+        DateTime dateTime = DateTime.Now;
         template = template.Replace("{expirationDays}", (expirationDate - dateTime).Days.ToString());
         template = template.Replace("{expirationDate}", expirationDate.ToShortDateString());
         template = template.Replace("{accountName}", userInfo.AccountName);
@@ -166,7 +159,7 @@ public class MailNotificator : IMailNotificator
         var templatePath = Path.Combine(_webHostEnvironment.WebRootPath, $"templates{Path.DirectorySeparatorChar}mail_admin_login_failed_alert_template.html");
         var template = File.ReadAllText(templatePath);
         template = template.Replace("{requestIp}", HttpContext.Connection.RemoteIpAddress.ToString());
-        var dateTime = DateTime.Now;
+        DateTime dateTime = DateTime.Now;
         template = template.Replace("{time}", dateTime.ToShortTimeString());
         template = template.Replace("{date}", dateTime.ToShortDateString());
         return template;
@@ -185,7 +178,7 @@ public class MailNotificator : IMailNotificator
         var template = File.ReadAllText(templatePath);
         template = template.Replace("{accountName}", $"{userInfo.DisplayName} ({userInfo.Email})");
         template = template.Replace("{requestIp}", HttpContext.Connection.RemoteIpAddress.ToString());
-        var dateTime = DateTime.Now;
+        DateTime dateTime = DateTime.Now;
         template = template.Replace("{time}", dateTime.ToShortTimeString());
         template = template.Replace("{date}", dateTime.ToShortDateString());
         return template;
@@ -206,19 +199,18 @@ public class MailNotificator : IMailNotificator
         template = template.Replace("{adminAccountName}", $"{adminInfo.name} ({adminInfo.email})");
         template = template.Replace("{userAccountName}", $"{userInfo.DisplayName} ({userInfo.Email})");
         template = template.Replace("{requestIp}", HttpContext.Connection.RemoteIpAddress.ToString());
-        var dateTime = DateTime.Now;
+        DateTime dateTime = DateTime.Now;
         template = template.Replace("{time}", dateTime.ToShortTimeString());
         template = template.Replace("{date}", dateTime.ToShortDateString());
         return template;
     }
 
-    public async Task SendManagementUserPasswordSetted(UserInfo userInfo, (string name, string email) adminInfo)
-        => await _mailService.SendMailAsync(new MailRequest
-        {
-            Body = GetManagementUserPasswordSettedTemplate(userInfo, adminInfo),
-            MailTo = AdminEmail,
-            Subject = "Contraseña establecida por administrador - Cambio de contraseña"
-        });
+    public async Task SendManagementUserPasswordSetted(UserInfo userInfo, (string name, string email) adminInfo) => await _mailService.SendMailAsync(new MailRequest
+    {
+        Body = GetManagementUserPasswordSettedTemplate(userInfo, adminInfo),
+        MailTo = AdminEmail,
+        Subject = "Contraseña establecida por administrador - Cambio de contraseña"
+    });
 
     private string GetManagementUserPasswordSettedTemplate(UserInfo userInfo, (string name, string email) adminInfo)
     {
@@ -227,7 +219,49 @@ public class MailNotificator : IMailNotificator
         template = template.Replace("{adminAccountName}", $"{adminInfo.name} ({adminInfo.email})");
         template = template.Replace("{userAccountName}", $"{userInfo.DisplayName} ({userInfo.Email})");
         template = template.Replace("{requestIp}", HttpContext.Connection.RemoteIpAddress.ToString());
-        var dateTime = DateTime.Now;
+        DateTime dateTime = DateTime.Now;
+        template = template.Replace("{time}", dateTime.ToShortTimeString());
+        template = template.Replace("{date}", dateTime.ToShortDateString());
+        return template;
+    }
+
+    public async Task SendManagementAccountDeleted(UserInfo userInfo, (string name, string email) adminInfo) => await _mailService.SendMailAsync(new MailRequest
+    {
+        Body = GetManagementAccountDeletedTemplate(userInfo, adminInfo),
+        MailTo = AdminEmail,
+        Subject = "Cuenta eliminada por administrador - Cambio de contraseña"
+    });
+
+    private string GetManagementAccountDeletedTemplate(UserInfo userInfo, (string name, string email) adminInfo)
+    {
+        var templatePath = Path.Combine(_webHostEnvironment.WebRootPath, $"templates{Path.DirectorySeparatorChar}mail_admin_account_deleted.html");
+        var template = File.ReadAllText(templatePath);
+        template = template.Replace("{adminAccountName}", $"{adminInfo.name} ({adminInfo.email})");
+        template = template.Replace("{userAccountName}", $"{userInfo.DisplayName} ({userInfo.Email})");
+        template = template.Replace("{requestIp}", HttpContext.Connection.RemoteIpAddress.ToString());
+        DateTime dateTime = DateTime.Now;
+        template = template.Replace("{time}", dateTime.ToShortTimeString());
+        template = template.Replace("{date}", dateTime.ToShortDateString());
+        return template;
+    }
+
+    public async Task SendManagementCreatedUser(UserInfo userInfo, string dependency, string area, (string Name, string Value) adminInfo) => await _mailService.SendMailAsync(new MailRequest
+    {
+        Body = GetManagementAccountCreatedTemplate(userInfo, adminInfo, area, dependency),
+        MailTo = AdminEmail,
+        Subject = "Cuenta creada por administrador - Cambio de contraseña"
+    });
+
+    private string GetManagementAccountCreatedTemplate(UserInfo userInfo, (string name, string email) adminInfo, string area, string dependency)
+    {
+        var templatePath = Path.Combine(_webHostEnvironment.WebRootPath, $"templates{Path.DirectorySeparatorChar}mail_admin_account_created.html");
+        var template = File.ReadAllText(templatePath);
+        template = template.Replace("{adminAccountName}", $"{adminInfo.name} ({adminInfo.email})");
+        template = template.Replace("{userAccountName}", $"{userInfo.DisplayName} ({userInfo.Email})");
+        template = template.Replace("{areaName}", area);
+        template = template.Replace("{dependencyName}", dependency);
+        template = template.Replace("{requestIp}", HttpContext.Connection.RemoteIpAddress.ToString());
+        DateTime dateTime = DateTime.Now;
         template = template.Replace("{time}", dateTime.ToShortTimeString());
         template = template.Replace("{date}", dateTime.ToShortDateString());
         return template;

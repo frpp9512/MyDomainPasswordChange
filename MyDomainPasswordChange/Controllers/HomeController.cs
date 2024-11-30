@@ -7,7 +7,6 @@ using MyDomainPasswordChange.Data.Interfaces;
 using MyDomainPasswordChange.Filters;
 using MyDomainPasswordChange.Management.Excepetions;
 using MyDomainPasswordChange.Management.Interfaces;
-using MyDomainPasswordChange.Management.Models;
 using MyDomainPasswordChange.Managers.Interfaces;
 using MyDomainPasswordChange.Models;
 using System;
@@ -19,39 +18,26 @@ using System.Threading.Tasks;
 namespace MyDomainPasswordChange.Controllers;
 
 [ServiceFilter(typeof(BlacklistFilter), IsReusable = true)]
-public class HomeController : Controller
+public class HomeController(ILogger<HomeController> logger,
+                            IDomainPasswordManagement passwordManagement,
+                            IPasswordHistoryManager historyManager,
+                            IMailNotifier mailNotificator,
+                            IWebHostEnvironment webHostEnvironment,
+                            IConfiguration configuration,
+                            IChallenger challenger,
+                            IAlertCountingManagement countingManagement) : Controller
 {
-    private readonly ILogger<HomeController> _logger;
-    private readonly IDomainPasswordManagement _passwordManagement;
-    private readonly IPasswordHistoryManager _historyManager;
-    private readonly IMailNotificator _mailNotificator;
-    private readonly IWebHostEnvironment _webHostEnvironment;
-    private readonly IConfiguration _configuration;
-    private readonly IChallenger _challenger;
-    private readonly IAlertCountingManagement _countingManagement;
-
-    public HomeController(ILogger<HomeController> logger,
-                          IDomainPasswordManagement passwordManagement,
-                          IPasswordHistoryManager historyManager,
-                          IMailNotificator mailNotificator,
-                          IWebHostEnvironment webHostEnvironment,
-                          IConfiguration configuration,
-                          IChallenger challenger,
-                          IAlertCountingManagement countingManagement)
-    {
-        _logger = logger;
-        _passwordManagement = passwordManagement;
-        _historyManager = historyManager;
-        _mailNotificator = mailNotificator;
-        _webHostEnvironment = webHostEnvironment;
-        _configuration = configuration;
-        _challenger = challenger;
-        _countingManagement = countingManagement;
-    }
+    private readonly ILogger<HomeController> _logger = logger;
+    private readonly IDomainPasswordManagement _passwordManagement = passwordManagement;
+    private readonly IPasswordHistoryManager _historyManager = historyManager;
+    private readonly IMailNotifier _mailNotificator = mailNotificator;
+    private readonly IWebHostEnvironment _webHostEnvironment = webHostEnvironment;
+    private readonly IConfiguration _configuration = configuration;
+    private readonly IChallenger _challenger = challenger;
+    private readonly IAlertCountingManagement _countingManagement = countingManagement;
 
     [HttpGet]
-    public async Task<IActionResult> Index(string accountName = "")
-    {
+    public IActionResult Index(string accountName = "") =>
         //var userInfo = new UserInfo
         //{
         //    AccountName = "testaccount1",
@@ -69,8 +55,7 @@ public class HomeController : Controller
         //    AllowedWorkstations = { "Abcd", "Defg", "Hijk" }
         //};
         //await _passwordManagement.CreateNewUserAsync(userInfo, "test.123*-", "Empresa", "Dirección", "accesoJabber", "navInternacionalRest", "mediaUser", "accesoNube", "accesoFtp", "depEmpresa");
-        return View(model: new ChangePasswordViewModel { Username = accountName });
-    }
+        View(model: new ChangePasswordViewModel { Username = accountName });
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -111,7 +96,7 @@ public class HomeController : Controller
 
             _passwordManagement.ChangeUserPassword(viewModel.Username, viewModel.Password, viewModel.NewPassword);
             await _historyManager.RegisterPasswordAsync(viewModel.Username, viewModel.NewPassword);
-            var userInfo = await _passwordManagement.GetUserInfo(viewModel.Username);
+            Management.Models.UserInfo userInfo = await _passwordManagement.GetUserInfo(viewModel.Username);
             await _mailNotificator.SendChangePasswordNotificationAsync(viewModel.Username);
             TempData["PasswordChanged"] = true;
             return RedirectToAction("ChangePasswordSuccess", new UserViewModel
@@ -142,8 +127,7 @@ public class HomeController : Controller
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult ChangePasswordSuccess(UserViewModel viewModel)
-        => TempData["PasswordChanged"] != null && (bool)TempData["PasswordChanged"] ? View(viewModel) : RedirectToAction("Index");
+    public IActionResult ChangePasswordSuccess(UserViewModel viewModel) => TempData["PasswordChanged"] != null && (bool)TempData["PasswordChanged"] ? View(viewModel) : RedirectToAction("Index");
 
     [HttpGet]
     public async Task<FileStreamResult> UserPicture(string accountName)
@@ -155,7 +139,7 @@ public class HomeController : Controller
             image = await System.IO.File.ReadAllBytesAsync(defaultPicture);
         }
 
-        var stream = new MemoryStream(image);
+        MemoryStream stream = new(image);
         return new FileStreamResult(stream, new MediaTypeHeaderValue("image/jpg"))
         {
             FileDownloadName = $"{accountName}.jpeg"
@@ -168,9 +152,9 @@ public class HomeController : Controller
         try
         {
             _logger.LogInformation($"Requesting challenge image Id: {challengeId}.");
-            var challengeImage = _challenger.GetChallengeImage(challengeId);
+            System.Drawing.Image challengeImage = _challenger.GetChallengeImage(challengeId);
             _logger.LogInformation($"Obtained challenge image with: {challengeImage?.Width} width.");
-            var stream = new MemoryStream();
+            MemoryStream stream = new();
             challengeImage.Save(stream, ImageFormat.Jpeg);
             return new FileContentResult(stream.ToArray(), new MediaTypeHeaderValue("image/jpg"));
         }

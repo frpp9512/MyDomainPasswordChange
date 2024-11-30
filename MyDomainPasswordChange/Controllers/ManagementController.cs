@@ -22,32 +22,21 @@ namespace MyDomainPasswordChange.Controllers;
 
 [ServiceFilter(typeof(BlacklistFilter))]
 [Authorize]
-public class ManagementController : Controller
+public class ManagementController(IDomainPasswordManagement passwordManagement,
+                                  ILogger<ManagementController> logger,
+                                  IDependenciesGroupsManagement groupsManagement,
+                                  IPasswordHistoryManager historyManager,
+                                  IConfiguration configuration,
+                                  IMailNotifier mailNotificator,
+                                  IMapper mapper) : Controller
 {
-    private readonly IDomainPasswordManagement _passwordManagement;
-    private readonly ILogger<ManagementController> _logger;
-    private readonly IDependenciesGroupsManagement _groupsManagement;
-    private readonly IPasswordHistoryManager _historyManager;
-    private readonly IConfiguration _configuration;
-    private readonly IMailNotificator _mailNotificator;
-    private readonly IMapper _mapper;
-
-    public ManagementController(IDomainPasswordManagement passwordManagement,
-                                ILogger<ManagementController> logger,
-                                IDependenciesGroupsManagement groupsManagement,
-                                IPasswordHistoryManager historyManager,
-                                IConfiguration configuration,
-                                IMailNotificator mailNotificator,
-                                IMapper mapper)
-    {
-        _passwordManagement = passwordManagement;
-        _logger = logger;
-        _groupsManagement = groupsManagement;
-        _historyManager = historyManager;
-        _configuration = configuration;
-        _mailNotificator = mailNotificator;
-        _mapper = mapper;
-    }
+    private readonly IDomainPasswordManagement _passwordManagement = passwordManagement;
+    private readonly ILogger<ManagementController> _logger = logger;
+    private readonly IDependenciesGroupsManagement _groupsManagement = groupsManagement;
+    private readonly IPasswordHistoryManager _historyManager = historyManager;
+    private readonly IConfiguration _configuration = configuration;
+    private readonly IMailNotifier _mailNotificator = mailNotificator;
+    private readonly IMapper _mapper = mapper;
 
     [HttpGet]
     public async Task<IActionResult> IndexAsync()
@@ -57,7 +46,7 @@ public class ManagementController : Controller
 
         try
         {
-            var userInfo = await _passwordManagement.GetUserInfo(accountName);
+            UserInfo userInfo = await _passwordManagement.GetUserInfo(accountName);
             groupsDeclarations = userInfo.Groups.Any(g => _groupsManagement.DefineIfGlobalDeclaration(g.AccountName))
                 ? _groupsManagement.GetAllDependenciesDeclarations()
                 : userInfo.Groups.Where(g => _groupsManagement.DefineIfDependencyDeclaration(g.AccountName))
@@ -66,10 +55,10 @@ public class ManagementController : Controller
         catch (Exception ex)
         {
             TempData["Error"] = ex.Message;
-            groupsDeclarations = new List<DependencyDeclaration>();
+            groupsDeclarations = [];
         }
 
-        var viewModel = await GenerateUserManagementViewModelAsync(groupsDeclarations);
+        UsersManagementViewModel viewModel = await GenerateUserManagementViewModelAsync(groupsDeclarations);
 
         return View(viewModel);
     }
@@ -78,10 +67,10 @@ public class ManagementController : Controller
     [Authorize(Roles = "GlobalAdmin")]
     public async Task<IActionResult> GetUsersByInternetAccess()
     {
-        var ldapFullInternetGroup = await _passwordManagement.GetGroupInfoByNameAsync("navInternacional");
-        var ldapRestInternetGroup = await _passwordManagement.GetGroupInfoByNameAsync("navInternacionalRest");
-        var usersWithFullInternet = await _passwordManagement.GetActiveUsersInfoFromGroupAsync(ldapFullInternetGroup);
-        var usersWithRestInternet = await _passwordManagement.GetActiveUsersInfoFromGroupAsync(ldapRestInternetGroup);
+        GroupInfo ldapFullInternetGroup = await _passwordManagement.GetGroupInfoByNameAsync("navInternacional");
+        GroupInfo ldapRestInternetGroup = await _passwordManagement.GetGroupInfoByNameAsync("navInternacionalRest");
+        List<UserInfo> usersWithFullInternet = await _passwordManagement.GetActiveUsersInfoFromGroupAsync(ldapFullInternetGroup);
+        List<UserInfo> usersWithRestInternet = await _passwordManagement.GetActiveUsersInfoFromGroupAsync(ldapRestInternetGroup);
         return Ok(new
         {
             totalUsersWithInternet = usersWithRestInternet.Count + usersWithFullInternet.Count,
@@ -103,37 +92,38 @@ public class ManagementController : Controller
 
     private async Task<UsersManagementViewModel> GenerateUserManagementViewModelAsync(IEnumerable<DependencyDeclaration> groupsDeclarations)
     {
-        var viewModel = new UsersManagementViewModel();
-        foreach (var groupDeclaration in groupsDeclarations)
+        UsersManagementViewModel viewModel = new();
+        foreach (DependencyDeclaration groupDeclaration in groupsDeclarations)
         {
-            var ldapGroup = await _passwordManagement.GetGroupInfoByNameAsync(groupDeclaration.GroupName);
-            var groupVM = new DependencyGroupViewModel
+            GroupInfo ldapGroup = await _passwordManagement.GetGroupInfoByNameAsync(groupDeclaration.GroupName);
+            DependencyGroupViewModel groupVM = new()
             {
                 DisplayName = ldapGroup.DisplayName,
                 Name = ldapGroup.AccountName,
                 Description = ldapGroup.Description
             };
-            var groupUsers = await _passwordManagement.GetActiveUsersInfoFromGroupAsync(ldapGroup);
+            List<UserInfo> groupUsers = await _passwordManagement.GetActiveUsersInfoFromGroupAsync(ldapGroup);
             groupVM.Users = MapUsersToViewModels(groupUsers);
             viewModel.Groups.Add(groupVM);
         }
 
-        var ldapGroups = groupsDeclarations.Select(g => _passwordManagement.GetGroupInfoByNameAsync(g.GroupName));
+        IEnumerable<Task<GroupInfo>> ldapGroups = groupsDeclarations.Select(g => _passwordManagement.GetGroupInfoByNameAsync(g.GroupName));
         return viewModel;
     }
 
-    private List<UserViewModel> MapUsersToViewModels(List<UserInfo> groupUsers) => groupUsers.Select(user =>
-    {
-        var vm = _mapper.Map<UserViewModel>(user);
-        vm.InternetAccess = user.Groups switch
+    private List<UserViewModel> MapUsersToViewModels(List<UserInfo> groupUsers)
+        => groupUsers.Select(user =>
         {
-            var groups when groups.Any(g => g.AccountName == Constants.FullInternetGroup) => InternetAccess.Full,
-            var groups when groups.Any(g => g.AccountName == Constants.RestInternetGroup) => InternetAccess.Restricted,
-            var groups when groups.Any(g => g.AccountName == Constants.NationalInternetGroup) => InternetAccess.National,
-            _ => InternetAccess.None
-        };
-        return vm;
-    }).ToList();
+            UserViewModel vm = _mapper.Map<UserViewModel>(user);
+            vm.InternetAccess = user.Groups switch
+            {
+                var groups when groups.Any(g => g.AccountName == Constants.FullInternetGroup) => InternetAccess.Full,
+                var groups when groups.Any(g => g.AccountName == Constants.RestInternetGroup) => InternetAccess.Restricted,
+                var groups when groups.Any(g => g.AccountName == Constants.NationalInternetGroup) => InternetAccess.National,
+                _ => InternetAccess.None
+            };
+            return vm;
+        }).ToList();
 
     [HttpGet]
     public async Task<IActionResult> ResetUserPasswordAsync(string accountName)
@@ -156,7 +146,7 @@ public class ManagementController : Controller
 
         if (User.IsInRole("GlobalAdmin") || user.Groups.Any(g => User.Claims.First(c => c.Type == "DependencyGroups").Value.Contains(g.AccountName)))
         {
-            var viewModel = _mapper.Map<UserViewModel>(user);
+            UserViewModel viewModel = _mapper.Map<UserViewModel>(user);
             return View(viewModel);
         }
 
@@ -214,7 +204,7 @@ public class ManagementController : Controller
             || user.Groups.Any(g => User.Claims.First(c => c.Type == "DependencyGroups").Value
                                                .Contains(g.AccountName)))
         {
-            var viewModel = _mapper.Map<SetUserPasswordViewModel>(user);
+            SetUserPasswordViewModel viewModel = _mapper.Map<SetUserPasswordViewModel>(user);
             return View(viewModel);
         }
 
@@ -237,7 +227,7 @@ public class ManagementController : Controller
                 if (await _historyManager.CheckPasswordHistoryAsync(viewModel.AccountName, viewModel.Password, _configuration.GetValue<int>("PasswordHistoryCheck")))
                 {
                     ModelState.AddModelError("PasswordHistory", "La nueva contraseña ya ha sido utilizada por el usuario anteriormente.");
-                    var user = await _passwordManagement.GetUserInfoAsync(viewModel.AccountName);
+                    UserInfo user = await _passwordManagement.GetUserInfoAsync(viewModel.AccountName);
                     viewModel = new SetUserPasswordViewModel
                     {
                         AccountName = user.AccountName,
@@ -278,5 +268,246 @@ public class ManagementController : Controller
         }
 
         return View(viewModel);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> CreateAccountAsync()
+    {
+        try
+        {
+            CreateAccountViewModel model = await GenerateCreateAccountViewModel();
+
+            return View(model);
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = ex.Message;
+            return Problem();
+        }
+    }
+
+    private async Task<CreateAccountViewModel> GenerateCreateAccountViewModel()
+    {
+        var accountName = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+        UserInfo userInfo = await _passwordManagement.GetUserInfo(accountName);
+        IEnumerable<DependencyDeclaration> groupsDeclarations = userInfo.Groups.Any(g => _groupsManagement.DefineIfGlobalDeclaration(g.AccountName))
+            ? _groupsManagement.GetAllDependenciesDeclarations()
+            : userInfo.Groups.Where(g => _groupsManagement.DefineIfDependencyDeclaration(g.AccountName))
+                                                    .Select(g => _groupsManagement.GetDeclarationByName(g.AccountName));
+
+        var workstations = _passwordManagement.GetAllWorkstations();
+        var model = new CreateAccountViewModel
+        {
+            AccountName = "",
+            Address = "",
+            AreaId = "",
+            DependencyId = "",
+            Description = "",
+            Email = "",
+            FirstName = "",
+            JobTitle = "",
+            LastName = "",
+            Office = "",
+            Password = "",
+            PersonalId = "",
+            Dependencies = groupsDeclarations.ToList(),
+            AvailableWorkstations = [.. workstations],
+        };
+        return model;
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateAccountAsync(CreateAccountModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(await GenerateCreateAccountViewModel());
+        }
+
+        try
+        {
+            if (_passwordManagement.UserExists(model.AccountName))
+            {
+                TempData["AccountNameTaken"] = model.AccountName;
+                return View(await GenerateCreateAccountViewModel());
+            }
+
+            var accountName = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            UserInfo userInfo = await _passwordManagement.GetUserInfo(accountName);
+            List<DependencyDeclaration> groupsDeclarations =
+                userInfo.Groups.Any(g => _groupsManagement.DefineIfGlobalDeclaration(g.AccountName))
+                ? _groupsManagement.GetAllDependenciesDeclarations().ToList()
+                : userInfo.Groups.Where(g => _groupsManagement.DefineIfDependencyDeclaration(g.AccountName))
+                                 .Select(g => _groupsManagement.GetDeclarationByName(g.AccountName))
+                                 .ToList();
+
+            if (groupsDeclarations.FirstOrDefault(group => group.GroupName == model.DependencyId) is not DependencyDeclaration selectedDependency
+                || selectedDependency.AreaDefinitions.FirstOrDefault(area => area.GroupName == model.AreaId) is not AreaDefinition selectedArea)
+            {
+                TempData["Error"] = "Debe de seleccionar una dependencia y un area válida para crear la cuenta.";
+                return View(await GenerateCreateAccountViewModel());
+            }
+
+            UserInfo newUserInfo = new()
+            {
+                AccountName = model.AccountName,
+                Address = model.Address,
+                AllowedWorkstations = model.AllowedWorkstations,
+                Description = model.Description,
+                DisplayName = $"{model.FirstName} {model.LastName}",
+                Email = $"{model.AccountName}@ingeco.cu",
+                Enabled = true,
+                FirstName = model.FirstName,
+                JobTitle = model.JobTitle,
+                LastName = model.LastName,
+                Office = model.Office,
+                MailboxCapacity = "150M",
+                PersonalId = model.PersonalId
+            };
+
+            string[] groups =
+            [
+                selectedDependency.GroupName,
+                selectedArea.GroupName,
+                model.InternetAccess switch
+                {
+                    InternetAccess.National => "navNacional",
+                    InternetAccess.Full => "navInternacional",
+                    InternetAccess.Restricted => "navInternacionalRest",
+                    _ => ""
+                },
+                model.CloudAccess ? "accesoNube" : "",
+                model.FTPAccess ? "accesoFtp" : "",
+                model.JabberAccess ? "accesoJabber" : "",
+                model.MediaAccess ? "mediaUser" : ""
+            ];
+
+            await _passwordManagement.CreateNewUserAsync(
+                newUserInfo,
+                model.Password,
+                selectedDependency.OU,
+                selectedArea.OU,
+                [..groups.Where(g => !string.IsNullOrEmpty(g))]);
+
+            await _mailNotificator.SendManagementCreatedUser(
+                            _mapper.Map<UserInfo>(newUserInfo),
+                            selectedDependency.Description,
+                            selectedArea.Description,
+                            (User.Identity.Name, User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value));
+
+            TempData["UserCreated"] = $"{model.DisplayName}";
+            return RedirectToActionPermanent("Index");
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = ex.Message;
+            return View(await GenerateCreateAccountViewModel());
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> UserDetailsAsync(string accountName)
+    {
+        UserInfo user;
+        try
+        {
+            user = await _passwordManagement.GetUserInfoAsync(accountName);
+        }
+        catch (UserNotFoundException)
+        {
+            TempData["UserUnknown"] = accountName;
+            return RedirectToAction("Index");
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = ex.Message;
+            return RedirectToAction("Index");
+        }
+
+        if (User.IsInRole("GlobalAdmin")
+            || user.Groups.Any(g => User.Claims.First(c => c.Type == "DependencyGroups").Value
+                                               .Contains(g.AccountName)))
+        {
+            UserViewModel viewModel = _mapper.Map<UserViewModel>(user);
+            viewModel.InternetAccess = user.Groups switch
+            {
+                var groups when groups.Any(g => g.AccountName == Constants.FullInternetGroup) => InternetAccess.Full,
+                var groups when groups.Any(g => g.AccountName == Constants.RestInternetGroup) => InternetAccess.Restricted,
+                var groups when groups.Any(g => g.AccountName == Constants.NationalInternetGroup) => InternetAccess.National,
+                _ => InternetAccess.None
+            };
+            return View(viewModel);
+        }
+
+        TempData["UnauthorizedAction"] = true;
+        return RedirectToAction("Index");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> DeleteAccountAsync(string accountName)
+    {
+        UserInfo user;
+        try
+        {
+            user = await _passwordManagement.GetUserInfoAsync(accountName);
+        }
+        catch (UserNotFoundException)
+        {
+            TempData["UserUnknown"] = accountName;
+            return RedirectToAction("Index");
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = ex.Message;
+            return RedirectToAction("Index");
+        }
+
+        if (User.IsInRole("GlobalAdmin")
+            || user.Groups.Any(g => User.Claims.First(c => c.Type == "DependencyGroups").Value
+                                                       .Contains(g.AccountName)))
+        {
+            UserViewModel viewModel = _mapper.Map<UserViewModel>(user);
+            viewModel.InternetAccess = user.Groups switch
+            {
+                var groups when groups.Any(g => g.AccountName == Constants.FullInternetGroup) => InternetAccess.Full,
+                var groups when groups.Any(g => g.AccountName == Constants.RestInternetGroup) => InternetAccess.Restricted,
+                var groups when groups.Any(g => g.AccountName == Constants.NationalInternetGroup) => InternetAccess.National,
+                _ => InternetAccess.None
+            };
+
+            return View(viewModel);
+        }
+
+        TempData["UnauthorizedAction"] = true;
+        return RedirectToAction("Index");
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteAccountAsync(DeleteAccountModel viewModel)
+    {
+        if (_passwordManagement.UserExists(viewModel.AccountName))
+        {
+            try
+            {
+                var user = await _passwordManagement.GetUserInfoAsync(viewModel.AccountName);
+                _passwordManagement.DeleteAccount(viewModel.AccountName);
+                await _mailNotificator.SendManagementAccountDeleted(
+                    user,
+                    (User.Identity.Name, User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value));
+                TempData["AccountDeleted"] = user.DisplayName;
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+        }
+        else
+        {
+            TempData["UserUnknown"] = viewModel.AccountName;
+        }
+
+        return RedirectToAction("Index");
     }
 }

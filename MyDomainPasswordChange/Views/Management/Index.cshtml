@@ -17,6 +17,7 @@
                 </button>
             </div>
         }
+
         @if (TempData["Error"] != null)
         {
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -26,6 +27,7 @@
                 </button>
             </div>
         }
+
         @if (TempData["PasswordResetted"] != null)
         {
             <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -37,6 +39,17 @@
                 </button>
             </div>
         }
+
+        @if (TempData["UserCreated"] is string accountCreated)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <strong><i class="fas fa-undo-alt"></i> CUENTA CREADA</strong> Se ha creado satisfactoriamente la cuenta: <b>@accountCreated</b>.
+                <button type="button" class="close" data-dismiss="alert" aria-label="cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        }
+
         @if (TempData["UserUnknown"] != null)
         {
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -46,6 +59,7 @@
                 </button>
             </div>
         }
+
         @if (TempData["PasswordSetted"] != null)
         {
             <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -56,8 +70,20 @@
             </div>
         }
 
+        @if (TempData["AccountDeleted"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <strong><i class="fas fa-asterisk"></i> CUENTA ELIMINADA</strong> Se ha eliminado satisfactoriamente la cuenta de  usuario <b>@TempData["AccountDeleted"]</b>.
+                <button type="button" class="close" data-dismiss="alert" aria-label="cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        }
+
         <h3>Administración</h3>
         <h5>Control de los usuarios del dominio</h5>
+
+        <a asp-action="CreateAccount" class="btn btn-success"><span class="fa fa-user-plus"></span> Crear cuenta</a>
 
         <div class="mt-3">
             <span class="badge badge-primary">
@@ -96,7 +122,7 @@
                 <i class="fas fa-globe"></i> Acceso limitado a internet <b>@Model.Groups.Sum(group => group.Users.Count(user => user.InternetAccess == InternetAccess.Restricted))</b>
             </span>
             <span class="badge badge-light">
-                <i class="fas fa-globe"></i> Acceso nacional a internet <b>@Model.Groups.Sum(group => group.Users.Count(user => user.InternetAccess == InternetAccess.Restricted))</b>
+                <i class="fas fa-globe"></i> Acceso nacional a internet <b>@Model.Groups.Sum(group => group.Users.Count(user => user.InternetAccess == InternetAccess.National))</b>
             </span>
             <span class="badge badge-dark">
                 <i class="fas fa-globe"></i> Sin acceso a internet <b>@Model.Groups.Sum(group => group.Users.Count(user => user.InternetAccess == InternetAccess.None))</b>
@@ -146,16 +172,16 @@
                                         <i class="fas fa-clock"></i> @dependency.GetPendingToSetPasswordUserCount()
                                     </span>
                                 }
-                                <span class="text-success ml-5">
+                                <span class="text-success ml-5" title="Acceso completo a internet">
                                     <i class="fas fa-globe"></i> @dependency.Users.Count(user => user.InternetAccess == InternetAccess.Full)
                                 </span>
-                                <span class="text-warning ml-2">
+                                <span class="text-warning ml-2" title="Acceso limitado a internet">
                                     <i class="fas fa-globe"></i> @dependency.Users.Count(user => user.InternetAccess == InternetAccess.Restricted)
                                 </span>
-                                <span class="text-dark ml-2">
+                                <span class="text-dark ml-2" title="Acceso limitado a internet">
                                     <i class="fas fa-globe"></i> @dependency.Users.Count(user => user.InternetAccess == InternetAccess.National)
                                 </span>
-                                <span class="text-muted ml-2">
+                                <span class="text-muted ml-2" title="Sin acceso a internet">
                                     <i class="fas fa-times"></i> @dependency.Users.Count(user => user.InternetAccess == InternetAccess.None)
                                 </span>
                             </td>
@@ -199,8 +225,12 @@
                                     <partial name="_PasswordExpirationDateLabel" model="user" />
                                 </td>
                                 <td align="right">
-                                    <a asp-action="ResetUserPassword" asp-controller="Management" asp-route-accountName="@user.AccountName"><i class="btn btn-info fas fa-undo-alt m-1"></i></a>
-                                    <a asp-action="SetUserPassword" asp-controller="Management" asp-route-accountName="@user.AccountName"><i class="btn btn-success fas fa-asterisk m-1"></i></a>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a class="btn btn-outline-info" asp-action="UserDetails" asp-controller="Management" asp-route-accountName="@user.AccountName"><i class="fas fa-info-circle m-1"></i></a>
+                                        <a class="btn btn-info" asp-action="ResetUserPassword" asp-controller="Management" asp-route-accountName="@user.AccountName"><i class="fas fa-undo-alt m-1"></i></a>
+                                        <a class="btn btn-success" asp-action="SetUserPassword" asp-controller="Management" asp-route-accountName="@user.AccountName"><i class="fas fa-asterisk m-1"></i></a>
+                                        <a class="btn btn-danger" asp-action="DeleteAccount" asp-controller="Management" asp-route-accountName="@user.AccountName"><i class="fas fa-trash m-1"></i></a>
+                                    </div>
                                 </td>
                             </tr>
                         }

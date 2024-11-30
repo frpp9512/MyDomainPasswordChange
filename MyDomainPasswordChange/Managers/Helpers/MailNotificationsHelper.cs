@@ -6,7 +6,7 @@ using MyDomainPasswordChange.Managers.Services;
 namespace MyDomainPasswordChange.Managers.Helpers;
 
 /// <summary>
-/// A set of extensions methods for the Mail Notification managament services.
+/// A set of extensions methods for the Mail Notification management services.
 /// </summary>
 public static class MailNotificationsHelper
 {
@@ -19,7 +19,7 @@ public static class MailNotificationsHelper
     {
         _ = services.AddTransient<IMailSettingsProvider, MailSettingsProvider>();
         _ = services.AddSingleton<IMyMailService, MyMailService>();
-        _ = services.AddTransient<IMailNotificator, MailNotificator>();
+        _ = services.AddTransient<IMailNotifier, MailNotifier>();
         return services;
     }
 }

@@ -6,7 +6,7 @@ namespace MyDomainPasswordChange.Data.Models;
 /// <summary>
 /// Represents a password used by an user.
 /// </summary>
-public class PasswordHistoryEntry
+public record PasswordHistoryEntry
 {
     /// <summary>
     /// The unique identifier of the entry.
